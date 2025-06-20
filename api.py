@@ -28,8 +28,8 @@ def run_script():
     try:
         # --- Run the script in the background ---
         # We use Popen for a non-blocking call. The API will respond immediately.
-        # The output (stdout/stderr) is redirected to /dev/null to prevent blocking.
-        subprocess.Popen(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        # The output (stdout/stderr) is now directed to the container's log.
+        subprocess.Popen(command)
         
         print(f"Started ad_clicker.py with query: '{query}'")
         return jsonify({"status": "success", "message": f"Ad clicker process started for query: {query}"})
