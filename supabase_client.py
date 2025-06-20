@@ -18,8 +18,7 @@ class SupabaseClient:
     """Supabase client for sending click data to database"""
 
     def __init__(self) -> None:
-        # Use IP address directly to bypass DNS issues, but with HTTP to avoid SSL
-        self.supabase_url = os.getenv("SUPABASE_URL", "").replace("https://", "http://").replace("gjhrgslbhajjpfudcegf.supabase.co", "104.18.38.10")
+        self.supabase_url = os.getenv("SUPABASE_URL", "")
         self.supabase_key = os.getenv("SUPABASE_KEY", "")
         self.enabled = bool(self.supabase_url and self.supabase_key)
         
@@ -44,23 +43,7 @@ class SupabaseClient:
         proxy_used: Optional[str] = None,
         user_agent: Optional[str] = None,
     ) -> None:
-        """Save click data to Supabase
-
-        :type site_url: str
-        :param site_url: Link clicked
-        :type category: str
-        :param category: Link category as Ad, Non-ad, or Shopping
-        :type query: str
-        :param query: Search query used
-        :type click_time: str
-        :param click_time: Time of the click in hh:mm:ss format
-        :type browser_id: Optional[str]
-        :param browser_id: ID of the browser instance
-        :type proxy_used: Optional[str]
-        :param proxy_used: Proxy used for the click
-        :type user_agent: Optional[str]
-        :param user_agent: User agent used for the click
-        """
+        """Save click data to Supabase"""
 
         if not self.enabled:
             logger.debug("Supabase is not configured, skipping...")
@@ -92,7 +75,6 @@ class SupabaseClient:
                 "Prefer": "return=minimal"
             }
 
-            # Try with longer timeout and better error handling
             response = self.session.post(
                 f"{self.supabase_url}/rest/v1/ads_clicker_log",
                 json=data,
@@ -114,13 +96,7 @@ class SupabaseClient:
             logger.error(f"Error sending to Supabase: {exp}")
 
     def query_clicks(self, click_date: str) -> Optional[list[tuple[str, str, str]]]:
-        """Query given date from Supabase and return results grouped by the site_url
-
-        :type click_date: str
-        :param click_date: Date to query clicks
-        :rtype: list
-        :returns: List of (site_url, clicks, category, click_time, query) tuples for the given date
-        """
+        """Query given date from Supabase and return results grouped by the site_url"""
 
         if not self.enabled:
             logger.debug("Supabase is not configured, skipping...")
@@ -141,7 +117,7 @@ class SupabaseClient:
                 "click_date": f"eq.{click_date}"
             }
 
-            response = requests.get(
+            response = self.session.get(
                 f"{self.supabase_url}/rest/v1/ads_clicker_log",
                 headers=headers,
                 params=query_params,
