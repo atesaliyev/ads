@@ -7,10 +7,15 @@ from logger import logger
 
 
 @dataclass
-class GeneralParams:
+class PathParams:
     query_file: str
-    domains: str
-    domain_mapping: str
+    domains_file: str
+    domain_mapping_file: str
+    proxy_file: Optional[str]
+
+
+@dataclass
+class GeneralParams:
     multi_browser_in_use: bool
     run_on_startup: bool
 
@@ -20,7 +25,6 @@ class WebdriverParams:
     browser: str
     incognito: bool
     auth: bool
-    proxy_file: Optional[str]
     country_domain: bool
     language_from_proxy: bool
     use_seleniumbase: bool
@@ -58,6 +62,7 @@ class ConfigReader:
     """Config file reader"""
 
     def __init__(self) -> None:
+        self.paths = None
         self.general = None
         self.webdriver = None
         self.behavior = None
@@ -72,10 +77,14 @@ class ConfigReader:
                 logger.error("Failed to read config file. Check format and try again.")
                 raise SystemExit()
 
+        self.paths = PathParams(
+            query_file=config["paths"]["query_file"],
+            domains_file=config["paths"]["domains_file"],
+            domain_mapping_file=config["paths"]["domain_mapping_file"],
+            proxy_file=config["paths"]["proxy_file"],
+        )
+
         self.general = GeneralParams(
-            query_file=config["general"]["query_file"],
-            domains=config["general"]["domains"],
-            domain_mapping=config["general"]["domain_mapping"],
             multi_browser_in_use=config["general"]["multi_browser_in_use"],
             run_on_startup=config["general"]["run_on_startup"],
         )
@@ -84,7 +93,6 @@ class ConfigReader:
             browser=config["webdriver"]["browser"],
             incognito=config["webdriver"]["incognito"],
             auth=config["webdriver"]["auth"],
-            proxy_file=config["webdriver"]["proxy_file"],
             country_domain=config["webdriver"]["country_domain"],
             language_from_proxy=config["webdriver"]["language_from_proxy"],
             use_seleniumbase=config["webdriver"]["use_seleniumbase"],

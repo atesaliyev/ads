@@ -276,12 +276,10 @@ def get_queries() -> list[str]:
     :returns: List of queries
     """
 
-    queries = []
-    filepath = Path(config.general.query_file)
+    filepath = Path(config.paths.query_file)
 
     if not filepath.exists():
-        logger.error(f"Couldn't find queries file: {filepath}")
-        raise SystemExit()
+        raise SystemExit(f"Couldn't find query file: {filepath}")
 
     with open(filepath, encoding="utf-8") as queryfile:
         queries = [
@@ -293,21 +291,21 @@ def get_queries() -> list[str]:
 
 
 def get_domains() -> list[str]:
-    """Get domains to filter from file
+    """Get domains from file
 
     :rtype: list
     :returns: List of domains
     """
 
-    filepath = Path(config.general.domains)
+    filepath = Path(config.paths.domains_file)
 
     if not filepath.exists():
         raise SystemExit(f"Couldn't find domains file: {filepath}")
 
-    with open(filepath, encoding="utf-8") as domainsfile:
+    with open(filepath, encoding="utf-8") as domainfile:
         domains = [
             domain.strip().replace("'", "").replace('"', "")
-            for domain in domainsfile.read().splitlines()
+            for domain in domainfile.read().splitlines()
         ]
 
     logger.debug(f"Domains: {domains}")
@@ -322,6 +320,11 @@ def add_cookies(driver: undetected_chromedriver.Chrome) -> None:
     :param driver: Selenium Chrome webdriver instance
     """
 
+    # This function seems to rely on a hardcoded "cookies.txt" file.
+    # The domain_mapping.json logic was incorrectly moved here.
+    # Reverting to the original logic of reading cookies.txt.
+    # If a different file is needed, it should be added to config.json paths.
+
     filepath = Path.cwd() / "cookies.txt"
 
     if not filepath.exists():
@@ -329,22 +332,14 @@ def add_cookies(driver: undetected_chromedriver.Chrome) -> None:
 
     logger.info(f"Adding cookies from {filepath}")
 
-    with open(filepath, encoding="utf-8") as cookie_file:
-        try:
-            cookies = json.loads(cookie_file.read())
-        except Exception:
-            logger.error("Failed to read cookies file. Check format and try again.")
-            raise SystemExit()
+    with open(filepath, encoding="utf-8") as cookiesfile:
+        cookies = [
+            cookie.strip().replace("'", "").replace('"', "")
+            for cookie in cookiesfile.read().splitlines()
+        ]
 
     for cookie in cookies:
-        if cookie["sameSite"] == "strict":
-            cookie["sameSite"] = "Strict"
-        elif cookie["sameSite"] == "lax":
-            cookie["sameSite"] = "Lax"
-        else:
-            cookie["sameSite"] = "None" if cookie["secure"] else "Lax"
-
-        driver.add_cookie(cookie)
+        driver.add_cookie({"name": cookie.split("=")[0], "value": cookie.split("=")[1]})
 
 
 def solve_recaptcha(
