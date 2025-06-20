@@ -169,9 +169,6 @@ def main():
     search_controller = None
 
     try:
-        # Initialize the configuration
-        config = ConfigReader()
-
         search_controller = SearchController(
             driver,
             queries[0],
