@@ -6,6 +6,7 @@ from argparse import ArgumentParser
 from datetime import datetime
 from itertools import chain, filterfalse, zip_longest
 from pathlib import Path
+from time import sleep
 
 import hooks
 from clicklogs_db import ClickLogsDB
@@ -18,6 +19,8 @@ from utils import (
     get_domains,
     take_screenshot,
     generate_click_report,
+    get_random_sleep,
+    update_click_stats,
 )
 from webdriver import create_webdriver
 
@@ -155,8 +158,6 @@ def main():
     driver, country_code = create_webdriver(proxy, user_agent, plugin_folder_name)
 
     if args.check_nowsecure:
-        from time import sleep
-
         driver.get("https://nowsecure.nl/")
         sleep(7 * config.behavior.wait_factor)
 
@@ -223,8 +224,57 @@ def main():
 
             logger.info(f"Found {len(ads) + len(shopping_ads)} ads")
 
-            search_controller.click_shopping_ads(shopping_ads)
-            search_controller.click_links(all_links)
+            # click on ads
+            if ads:
+                logger.info(f"Found {len(ads)} ads")
+                hooks.before_ad_click_hook(driver)
+
+                for ad, ad_link, ad_title in ads:
+                    probability = random.random()
+                    if probability > config.behavior.ad_click_probability:
+                        logger.info(f"Skipping click to [{ad_title}]")
+                        continue
+
+                    logger.info(f"Clicking to [{ad_title}]({ad_link})...")
+
+                    try:
+                        # Use JavaScript click for reliability, as normal click can be intercepted.
+                        driver.execute_script("arguments[0].click();", ad)
+                        
+                        # After click, a new tab is opened. Switch to it.
+                        # The new tab is usually the last one in window_handles.
+                        sleep(2) # Give a moment for the new tab to open
+                        driver.switch_to.window(driver.window_handles[-1])
+                        
+                        # Log the click to the database
+                        update_click_stats("Ad", ad_link, search_controller)
+                        
+                        # Wait on the ad page for a random amount of time
+                        wait_time = get_random_sleep(
+                            config.behavior.ad_page_min_wait, config.behavior.ad_page_max_wait
+                        )
+                        logger.info(f"Waiting on ad page for {int(wait_time)} seconds...")
+                        sleep(wait_time)
+
+                        # Close the ad tab and switch back to the main search results tab
+                        driver.close()
+                        driver.switch_to.window(driver.window_handles[0])
+
+                    except Exception as e:
+                        logger.error(f"Failed to click on [{ad_title}]! Reason: {e}")
+                        # If clicking fails, switch back to the main tab to continue
+                        if len(driver.window_handles) > 1:
+                            driver.switch_to.window(driver.window_handles[0])
+
+                    # sleep after each click attempt
+                    sleep(get_random_sleep(2, 4) * config.behavior.wait_factor)
+            else:
+                logger.info("No ads found in the search results!")
+
+            # click on non-ad links
+            if non_ad_links:
+                logger.info(f"Found {len(non_ad_links)} non-ad links")
+                search_controller.click_links(non_ad_links)
 
             if config.behavior.hooks_enabled:
                 hooks.after_clicks_hook(driver)
