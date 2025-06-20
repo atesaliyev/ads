@@ -46,6 +46,7 @@ class BehaviorParams:
     delete_cookies: bool
     hooks_enabled: bool
     twocaptcha_apikey: str
+    telegram_enabled: bool
 
 
 class ConfigReader:
@@ -103,6 +104,7 @@ class ConfigReader:
             delete_cookies=config["behavior"]["delete_cookies"],
             hooks_enabled=config["behavior"]["hooks_enabled"],
             twocaptcha_apikey=config["behavior"]["twocaptcha_apikey"],
+            telegram_enabled=config["behavior"]["telegram_enabled"],
         )
 
 
