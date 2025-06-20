@@ -25,7 +25,8 @@
     "twocaptcha_apikey": "YOUR_2CAPTCHA_API_KEY_HERE",
     "telegram_enabled": false,
     "max_scroll_limit": 5,
-    "excludes": ""
+    "excludes": "",
+    "check_shopping_ads": false
   },
   "database": {
     "use_supabase": true,

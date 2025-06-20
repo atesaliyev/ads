@@ -50,6 +50,7 @@ class BehaviorParams:
     telegram_enabled: bool
     max_scroll_limit: int
     excludes: Optional[str]
+    check_shopping_ads: bool
 
 
 class ConfigReader:
@@ -111,6 +112,7 @@ class ConfigReader:
             telegram_enabled=config["behavior"]["telegram_enabled"],
             max_scroll_limit=config["behavior"]["max_scroll_limit"],
             excludes=config["behavior"]["excludes"],
+            check_shopping_ads=config["behavior"]["check_shopping_ads"],
         )
 
 
