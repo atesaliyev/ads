@@ -27,6 +27,7 @@ class WebdriverParams:
     window_size: Optional[str]
     shift_windows: bool
     check_shopping_ads: bool
+    ss_on_exception: bool
 
 
 @dataclass
@@ -47,6 +48,7 @@ class BehaviorParams:
     hooks_enabled: bool
     twocaptcha_apikey: str
     telegram_enabled: bool
+    max_scroll_limit: int
 
 
 class ConfigReader:
@@ -86,6 +88,7 @@ class ConfigReader:
             window_size=config["webdriver"]["window_size"],
             shift_windows=config["webdriver"]["shift_windows"],
             check_shopping_ads=config["webdriver"]["check_shopping_ads"],
+            ss_on_exception=config["webdriver"]["ss_on_exception"],
         )
 
         self.behavior = BehaviorParams(
@@ -105,6 +108,7 @@ class ConfigReader:
             hooks_enabled=config["behavior"]["hooks_enabled"],
             twocaptcha_apikey=config["behavior"]["twocaptcha_apikey"],
             telegram_enabled=config["behavior"]["telegram_enabled"],
+            max_scroll_limit=config["behavior"]["max_scroll_limit"],
         )
 
 

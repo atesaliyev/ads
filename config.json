@@ -23,7 +23,8 @@
     "delete_cookies": false,
     "hooks_enabled": true,
     "twocaptcha_apikey": "YOUR_2CAPTCHA_API_KEY_HERE",
-    "telegram_enabled": false
+    "telegram_enabled": false,
+    "max_scroll_limit": 5
   },
   "database": {
     "use_supabase": true,
@@ -39,7 +40,8 @@
     "use_seleniumbase": false,
     "window_size": null,
     "shift_windows": false,
-    "check_shopping_ads": false
+    "check_shopping_ads": false,
+    "ss_on_exception": true
   },
   "telegram": {
     "bot_token": "",
