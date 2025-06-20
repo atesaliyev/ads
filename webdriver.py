@@ -139,8 +139,9 @@ def create_webdriver(
     chrome_options = undetected_chromedriver.ChromeOptions()
     
     # --- Hardening Options ---
-    # This option is crucial for hiding the automation software
-    chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
+    # The 'excludeSwitches' option is not compatible with the current driver and causes a crash.
+    # We are removing it, but keeping the 'useAutomationExtension' which is safer.
+    # chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
     chrome_options.add_experimental_option('useAutomationExtension', False)
     
     chrome_options.add_argument("--no-sandbox")
