@@ -137,6 +137,12 @@ def create_webdriver(
     geolocation_db_client = GeolocationDB()
 
     chrome_options = undetected_chromedriver.ChromeOptions()
+    
+    # --- Hardening Options ---
+    # This option is crucial for hiding the automation software
+    chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
+    chrome_options.add_experimental_option('useAutomationExtension', False)
+    
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--no-first-run")
     chrome_options.add_argument("--no-service-autorun")
@@ -262,7 +268,7 @@ def create_webdriver(
             use_subprocess=False,
         )
 
-    # Execute stealth javascript code
+    # Execute the most powerful stealth script right after driver creation
     _execute_stealth_js_code(driver)
 
     # driver.maximize_window() is commented out to prevent errors
@@ -418,32 +424,50 @@ def _get_driver_exe_path() -> str:
 
 
 def _execute_stealth_js_code(driver: Union[undetected_chromedriver.Chrome, seleniumbase.Driver]):
-    """Execute the stealth JS code to prevent detection"""
+    """Executes a comprehensive stealth script to avoid detection."""
     stealth_js = r"""
-    (() => {
-    // Overwrite the 'plugins' property to mimic a normal browser.
-    Object.defineProperty(navigator, 'plugins', {
-        get: () => [1, 2, 3, 4, 5],
-    });
-    // Overwrite the 'languages' property.
-    Object.defineProperty(navigator, 'languages', {
-        get: () => ['en-US', 'en'],
-    });
-    // Pass the Webdriver test
-    Object.defineProperty(navigator, 'webdriver', {
-        get: () => false,
-    });
-    // Pass the Chrome test
-    Object.defineProperty(window, 'chrome', {
-        get: () => ({}),
-    });
-    // Pass the Permissions test
-    const originalQuery = window.navigator.permissions.query;
-    window.navigator.permissions.query = (parameters) => (
-        parameters.name === 'notifications' ?
-        Promise.resolve({ state: Notification.permission }) :
-        originalQuery(parameters)
-    );
-    })();
+      (() => {
+        // Pass the Webdriver Test
+        Object.defineProperty(navigator, 'webdriver', {
+          get: () => false,
+        });
+
+        // Pass the Chrome Test
+        Object.defineProperty(window, 'chrome', {
+          get: () => ({}),
+        });
+
+        // Pass the Permissions Test
+        const originalQuery = window.navigator.permissions.query;
+        window.navigator.permissions.query = (parameters) => (
+          parameters.name === 'notifications'
+            ? Promise.resolve({ state: Notification.permission })
+            : originalQuery(parameters)
+        );
+
+        // Pass the Plugins Length Test
+        Object.defineProperty(navigator, 'plugins', {
+          get: () => [1, 2, 3], // Mimic a few plugins
+        });
+
+        // Pass the Languages Test
+        Object.defineProperty(navigator, 'languages', {
+          get: () => ['en-US', 'en'],
+        });
+
+        // WebGL Vendor and Renderer Spoofing
+        const getParameter = WebGLRenderingContext.prototype.getParameter;
+        WebGLRenderingContext.prototype.getParameter = function(parameter) {
+          // UNMASKED_VENDOR_WEBGL
+          if (parameter === 37445) {
+            return 'Intel Inc.';
+          }
+          // UNMASKED_RENDERER_WEBGL
+          if (parameter === 37446) {
+            return 'Intel Iris OpenGL Engine';
+          }
+          return getParameter(parameter);
+        };
+      })();
     """
     driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {"source": stealth_js})
