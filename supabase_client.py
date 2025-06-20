@@ -2,6 +2,8 @@ import os
 from datetime import datetime
 from typing import Optional
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 from logger import logger
 
 # Load environment variables from .env file
@@ -16,9 +18,21 @@ class SupabaseClient:
     """Supabase client for sending click data to database"""
 
     def __init__(self) -> None:
-        self.supabase_url = os.getenv("SUPABASE_URL", "")
+        # Use IP address directly to bypass DNS issues
+        self.supabase_url = os.getenv("SUPABASE_URL", "").replace("gjhrgslbhajjpfudcegf.supabase.co", "104.18.38.10")
         self.supabase_key = os.getenv("SUPABASE_KEY", "")
         self.enabled = bool(self.supabase_url and self.supabase_key)
+        
+        # Create session with retry strategy
+        self.session = requests.Session()
+        retry_strategy = Retry(
+            total=3,
+            backoff_factor=1,
+            status_forcelist=[429, 500, 502, 503, 504],
+        )
+        adapter = HTTPAdapter(max_retries=retry_strategy)
+        self.session.mount("http://", adapter)
+        self.session.mount("https://", adapter)
 
     def save_click(
         self,
@@ -78,11 +92,12 @@ class SupabaseClient:
                 "Prefer": "return=minimal"
             }
 
-            response = requests.post(
+            # Try with longer timeout and better error handling
+            response = self.session.post(
                 f"{self.supabase_url}/rest/v1/ads_clicker_log",
                 json=data,
                 headers=headers,
-                timeout=10
+                timeout=30
             )
 
             if response.status_code == 201:
@@ -91,6 +106,10 @@ class SupabaseClient:
             else:
                 logger.warning(f"Failed to send to Supabase: {response.status_code} - {response.text}")
 
+        except requests.exceptions.ConnectionError as e:
+            logger.error(f"Connection error to Supabase: {e}")
+        except requests.exceptions.Timeout as e:
+            logger.error(f"Timeout error to Supabase: {e}")
         except Exception as exp:
             logger.error(f"Error sending to Supabase: {exp}")
 
