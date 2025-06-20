@@ -92,7 +92,7 @@ var config = {
         port: %s
       },
       proxyForHttps: {
-        scheme: "https",
+        scheme: "http",
         host: "%s",
         port: %s
       },
