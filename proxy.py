@@ -15,7 +15,7 @@ from logger import logger
 
 
 def get_proxies() -> list[str]:
-    """Get proxies from file
+    """Get proxies from file, ignoring comments and empty lines.
 
     :rtype: list
     :returns: List of proxies
@@ -26,11 +26,15 @@ def get_proxies() -> list[str]:
     if not filepath.exists():
         raise SystemExit(f"Couldn't find proxy file: {filepath}")
 
+    proxies = []
     with open(filepath, encoding="utf-8") as proxyfile:
-        proxies = [
-            proxy.strip().replace("'", "").replace('"', "")
-            for proxy in proxyfile.read().splitlines()
-        ]
+        for line in proxyfile:
+            line = line.strip()
+            if line and not line.startswith("#"):
+                proxies.append(line.replace("'", "").replace('"', ""))
+
+    if not proxies:
+        raise SystemExit(f"No valid proxies found in {filepath}. Please add at least one proxy.")
 
     return proxies
 
