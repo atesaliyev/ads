@@ -21,7 +21,7 @@ except ImportError:
     import seleniumbase
     import undetected_chromedriver
 
-from config_reader import config
+from config_reader import ConfigReader
 from geolocation_db import GeolocationDB
 from logger import logger
 from proxy import install_plugin
@@ -133,6 +133,8 @@ def create_webdriver(
     :rtype: tuple
     :returns: (undetected_chromedriver.Chrome, country_code) pair
     """
+
+    config = ConfigReader()
 
     if config.webdriver.use_seleniumbase:
         logger.debug("Using SeleniumBase...")
@@ -284,6 +286,8 @@ def create_seleniumbase_driver(
     :rtype: tuple
     :returns: (Driver, country_code) pair
     """
+
+    config = ConfigReader()
 
     geolocation_db_client = GeolocationDB()
 

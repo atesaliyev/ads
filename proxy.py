@@ -10,29 +10,25 @@ except ImportError:
 
     from selenium.webdriver import ChromeOptions
 
-from config_reader import config
+from config_reader import ConfigReader
 from logger import logger
 
 
-def get_proxies() -> list[str]:
-    """Get proxies from file
-
+def get_proxies() -> list:
+    """Read proxies from a file
     :rtype: list
     :returns: List of proxies
     """
-
-    filepath = Path(config.paths.proxy_file)
-
-    if not filepath.exists():
-        raise SystemExit(f"Couldn't find proxy file: {filepath}")
-
-    with open(filepath, encoding="utf-8") as proxyfile:
-        proxies = [
-            proxy.strip().replace("'", "").replace('"', "")
-            for proxy in proxyfile.read().splitlines()
-        ]
-
-    return proxies
+    config = ConfigReader()
+    proxy_file = config.webdriver.proxy_file
+    if not proxy_file:
+        return []
+    
+    try:
+        with open(proxy_file, "r", encoding="utf-8") as file:
+            return [line.strip() for line in file if line.strip()]
+    except FileNotFoundError:
+        return []
 
 
 def install_plugin(
