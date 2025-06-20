@@ -10,7 +10,7 @@ from time import sleep
 
 import hooks
 from clicklogs_db import ClickLogsDB
-from config_reader import config
+from config_reader import ConfigReader
 from logger import logger, update_log_formats
 from proxy import get_proxies
 from search_controller import SearchController, update_click_stats
@@ -135,14 +135,12 @@ def main():
     else:
         queries = get_queries()
 
+    # Get proxies from file
     if args.proxy:
         proxy = args.proxy
-    elif config.paths.proxy_file:
+    elif config.webdriver.proxy_file:
         proxies = get_proxies()
-        logger.debug(f"Proxies: {proxies}")
-        proxy = random.choice(proxies)
-    elif config.webdriver.proxy:
-        proxy = config.webdriver.proxy
+        proxy = random.choice(proxies) if proxies else None
     else:
         proxy = None
 
@@ -168,6 +166,9 @@ def main():
     search_controller = None
 
     try:
+        # Initialize the configuration
+        config = ConfigReader()
+
         search_controller = SearchController(
             driver,
             queries[0],
