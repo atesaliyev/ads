@@ -56,3 +56,7 @@ RUN echo '#!/bin/sh' > /src/start.sh && \
 
 # Use the startup script as the entrypoint
 ENTRYPOINT ["/src/start.sh"]
+
+# Set DNS servers to resolve Supabase
+RUN echo "nameserver 8.8.8.8" > /etc/resolv.conf && \
+    echo "nameserver 8.8.4.4" >> /etc/resolv.conf
