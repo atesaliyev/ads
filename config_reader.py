@@ -91,7 +91,3 @@ class ConfigReader:
         # If a section is not found, return an empty Section object
         # which will return None for any attribute access.
         return self._Section({})
-
-
-config = ConfigReader()
-config.read_parameters()
