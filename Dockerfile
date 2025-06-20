@@ -40,6 +40,7 @@ COPY . /src
 
 # set display port to avoid crash
 ENV DISPLAY=:99
+ENV PYTHONUNBUFFERED=1
 
 RUN python3 - <<EOF
 from undetected_chromedriver.patcher import Patcher
