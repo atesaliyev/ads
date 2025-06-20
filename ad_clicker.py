@@ -24,7 +24,10 @@ from utils import (
 )
 from webdriver import create_webdriver
 
+# Instantiate config at the module level to be accessible globally
+config = ConfigReader()
 
+# Conditionally import telegram notifier based on config
 if config.behavior.telegram_enabled:
     from telegram_notifier import notify_matching_ads, start_bot
 
