@@ -122,27 +122,14 @@ class CustomChrome(undetected_chromedriver.Chrome):
 def create_webdriver(
     proxy: str, user_agent: Optional[str] = None, plugin_folder_name: Optional[str] = None
 ) -> tuple[undetected_chromedriver.Chrome, Optional[str]]:
-    """Create Selenium Chrome webdriver instance
-
-    :type proxy: str
-    :param proxy: Proxy to use in ip:port or user:pass@host:port format
-    :type user_agent: str
-    :param user_agent: User agent string
-    :type plugin_folder_name: str
-    :param plugin_folder_name: Plugin folder name for proxy
-    :rtype: tuple
-    :returns: (undetected_chromedriver.Chrome, country_code) pair
-    """
+    """Create Selenium Chrome webdriver instance"""
 
     geolocation_db_client = GeolocationDB()
 
     chrome_options = undetected_chromedriver.ChromeOptions()
     
-    # --- Hardening Options ---
-    # The 'excludeSwitches' option is not compatible with the current driver and causes a crash.
-    # We are removing it, but keeping the 'useAutomationExtension' which is safer.
-    # chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
-    chrome_options.add_experimental_option('useAutomationExtension', False)
+    # Reverting all experimental options that caused crashes.
+    # We will rely on the default protections of undetected_chromedriver.
     
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--no-first-run")
@@ -269,10 +256,9 @@ def create_webdriver(
             use_subprocess=False,
         )
 
-    # Execute the most powerful stealth script right after driver creation
-    _execute_stealth_js_code(driver)
+    # The call to _execute_stealth_js_code is removed to prevent crashes.
+    # _execute_stealth_js_code(driver)
 
-    # driver.maximize_window() is commented out to prevent errors
     sleep(1 * config.behavior.wait_factor)
     _shift_window_position(driver)
 
@@ -425,50 +411,5 @@ def _get_driver_exe_path() -> str:
 
 
 def _execute_stealth_js_code(driver: Union[undetected_chromedriver.Chrome, seleniumbase.Driver]):
-    """Executes a comprehensive stealth script to avoid detection."""
-    stealth_js = r"""
-      (() => {
-        // Pass the Webdriver Test
-        Object.defineProperty(navigator, 'webdriver', {
-          get: () => false,
-        });
-
-        // Pass the Chrome Test
-        Object.defineProperty(window, 'chrome', {
-          get: () => ({}),
-        });
-
-        // Pass the Permissions Test
-        const originalQuery = window.navigator.permissions.query;
-        window.navigator.permissions.query = (parameters) => (
-          parameters.name === 'notifications'
-            ? Promise.resolve({ state: Notification.permission })
-            : originalQuery(parameters)
-        );
-
-        // Pass the Plugins Length Test
-        Object.defineProperty(navigator, 'plugins', {
-          get: () => [1, 2, 3], // Mimic a few plugins
-        });
-
-        // Pass the Languages Test
-        Object.defineProperty(navigator, 'languages', {
-          get: () => ['en-US', 'en'],
-        });
-
-        // WebGL Vendor and Renderer Spoofing
-        const getParameter = WebGLRenderingContext.prototype.getParameter;
-        WebGLRenderingContext.prototype.getParameter = function(parameter) {
-          // UNMASKED_VENDOR_WEBGL
-          if (parameter === 37445) {
-            return 'Intel Inc.';
-          }
-          // UNMASKED_RENDERER_WEBGL
-          if (parameter === 37446) {
-            return 'Intel Iris OpenGL Engine';
-          }
-          return getParameter(parameter);
-        };
-      })();
-    """
-    driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {"source": stealth_js})
+    """This function is no longer called to prevent driver crashes."""
+    pass
