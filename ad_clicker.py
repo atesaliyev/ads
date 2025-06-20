@@ -254,25 +254,43 @@ def main():
                     try:
                         driver.execute_script("arguments[0].click();", ad_element)
                         sleep(2)
-                        driver.switch_to.window(driver.window_handles[-1])
                         
-                        update_click_stats(search_controller, ad_link, "Ad")
-                        logger.info(f"Successfully clicked and logged ad: {ad_title}")
-                        ads_clicked_count += 1
-                        
-                        wait_time = get_random_sleep(
-                            config.behavior.ad_page_min_wait, config.behavior.ad_page_max_wait
-                        )
-                        logger.info(f"Waiting on ad page for {int(wait_time)} seconds...")
-                        sleep(wait_time)
+                        # Check if new window opened
+                        if len(driver.window_handles) > 1:
+                            driver.switch_to.window(driver.window_handles[-1])
+                            
+                            update_click_stats(search_controller, ad_link, "Ad")
+                            logger.info(f"Successfully clicked and logged ad: {ad_title}")
+                            ads_clicked_count += 1
+                            
+                            wait_time = get_random_sleep(
+                                config.behavior.ad_page_min_wait, config.behavior.ad_page_max_wait
+                            )
+                            logger.info(f"Waiting on ad page for {int(wait_time)} seconds...")
+                            sleep(wait_time)
 
-                        driver.close()
-                        driver.switch_to.window(driver.window_handles[0])
+                            # Safely close the ad tab and switch back
+                            try:
+                                driver.close()
+                                if len(driver.window_handles) > 0:
+                                    driver.switch_to.window(driver.window_handles[0])
+                            except Exception as e:
+                                logger.warning(f"Error switching back to main window: {e}")
+                                # If we can't switch back, the session might be invalid, break the loop
+                                break
+                        else:
+                            logger.warning("No new window opened after clicking ad")
 
                     except Exception as e:
                         logger.error(f"Failed to click on [{ad_title}]! Reason: {e}")
-                        if len(driver.window_handles) > 1:
-                            driver.switch_to.window(driver.window_handles[0])
+                        # Try to switch back to main window if possible
+                        try:
+                            if len(driver.window_handles) > 1:
+                                driver.switch_to.window(driver.window_handles[0])
+                        except Exception as switch_error:
+                            logger.warning(f"Could not switch back to main window: {switch_error}")
+                            # If we can't switch back, break the loop to avoid more errors
+                            break
 
                     sleep(get_random_sleep(2, 4) * config.behavior.wait_factor)
             else:
@@ -323,9 +341,14 @@ def main():
 
     except Exception as exp:
         logger.error("Exception occurred. See the details in the log file.")
-
-        if config.webdriver.ss_on_exception:
-            take_screenshot(driver)
+        logger.error(f"Error: {exp}")
+        
+        # Try to take screenshot only if driver is still valid
+        try:
+            if driver and hasattr(driver, 'current_url'):
+                take_screenshot(driver)
+        except Exception as screenshot_error:
+            logger.warning(f"Could not take screenshot: {screenshot_error}")
 
         message = str(exp).split("\n")[0]
         logger.debug(f"Exception: {message}")
