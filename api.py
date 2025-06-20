@@ -4,6 +4,7 @@ import json
 from datetime import datetime
 from flask import Flask, request, jsonify, Response
 from clicklogs_db import ClickLogsDB
+from collections import deque
 
 app = Flask(__name__)
 
@@ -40,6 +41,42 @@ def run_script():
     except Exception as e:
         print(f"Error starting script: {e}")
         return jsonify({"status": "error", "message": f"Failed to start script: {e}"}), 500
+
+@app.route('/view-logs', methods=['GET'])
+def view_logs():
+    """
+    Tails the log file and returns the last N lines.
+    Query parameters:
+    - lines: Number of lines to fetch (default: 10)
+    """
+    try:
+        try:
+            num_lines = int(request.args.get('lines', '10'))
+        except ValueError:
+            return jsonify({"status": "error", "message": "Invalid 'lines' parameter. Must be an integer."}), 400
+
+        log_file_path = os.path.join('logs', 'adclicker.log')
+        
+        if not os.path.exists(log_file_path):
+            return jsonify({"status": "success", "logs": [f"Log file not found at '{log_file_path}'"]})
+
+        with open(log_file_path, 'r', encoding='utf-8') as f:
+            last_lines = deque(f, num_lines)
+
+        return jsonify({
+            "status": "success",
+            "log_file": log_file_path,
+            "lines_requested": num_lines,
+            "logs": [line.strip() for line in last_lines]
+        })
+            
+    except Exception as e:
+        # It's good practice to log the actual exception
+        print(f"Error reading log file: {e}")
+        return jsonify({
+            "status": "error",
+            "message": f"Failed to read log file: {str(e)}"
+        }), 500
 
 @app.route('/logs', methods=['GET'])
 def get_logs():
