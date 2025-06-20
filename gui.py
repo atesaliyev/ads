@@ -5,7 +5,7 @@ from typing import Optional
 import customtkinter
 from tkinter import filedialog
 
-from config_reader import ConfigReader
+from config_reader import config
 from logger import logger
 from ad_clicker import main as ad_clicker_main
 from run_ad_clicker import main as run_ad_clicker_main
@@ -33,16 +33,16 @@ class PathsFrame(customtkinter.CTkFrame):
         self._title.grid(row=0, column=0, columnspan=3, padx=10, pady=10, sticky="ew")
 
         self._query_file = self._add_path_input(
-            row=1, label="Sorgu dosyası", default_value=self.config.paths.query_file
+            row=1, label="Sorgu dosyası", default_value=config.paths.query_file
         )
         self._proxy_file = self._add_path_input(
-            row=2, label="Proxy dosyası", default_value=self.config.paths.proxy_file
+            row=2, label="Proxy dosyası", default_value=config.paths.proxy_file
         )
         self._user_agents = self._add_path_input(
-            row=3, label="User agent'lar", default_value=self.config.paths.user_agents
+            row=3, label="User agent'lar", default_value=config.paths.user_agents
         )
         self._filtered_domains = self._add_path_input(
-            row=4, label="Filtrelenmiş domain'ler", default_value=self.config.paths.filtered_domains
+            row=4, label="Filtrelenmiş domain'ler", default_value=config.paths.filtered_domains
         )
 
     def open_file_dialog(self, textbox: customtkinter.CTkTextbox) -> None:
@@ -124,35 +124,35 @@ class WebdriverFrame(customtkinter.CTkFrame):
 
         self._proxy_input = self._add_input_field(row=1, label="Proxy")
         self._window_size_input = self._add_input_field(
-            row=2, label="Pencere boyutu", default_value=self.config.webdriver.window_size
+            row=2, label="Pencere boyutu", default_value=config.webdriver.window_size
         )
 
         self._auth_value = self._add_checkbox(
-            row=3, column=0, label="Proxy Kimlik Doğrulama", enabled=self.config.webdriver.auth
+            row=3, column=0, label="Proxy Kimlik Doğrulama", enabled=config.webdriver.auth
         )
         self._incognito_value = self._add_checkbox(
-            row=3, column=1, label="Gizli Mod", enabled=self.config.webdriver.incognito
+            row=3, column=1, label="Gizli Mod", enabled=config.webdriver.incognito
         )
         self._shift_windows_value = self._add_checkbox(
-            row=3, column=2, label="Pencere Kaydır", enabled=self.config.webdriver.shift_windows
+            row=3, column=2, label="Pencere Kaydır", enabled=config.webdriver.shift_windows
         )
         self._country_domain_value = self._add_checkbox(
-            row=4, column=0, label="Ülke Domain'i", enabled=self.config.webdriver.country_domain
+            row=4, column=0, label="Ülke Domain'i", enabled=config.webdriver.country_domain
         )
         self._language_from_proxy_value = self._add_checkbox(
             row=4,
             column=1,
             label="Proxy'den Dil",
-            enabled=self.config.webdriver.language_from_proxy,
+            enabled=config.webdriver.language_from_proxy,
         )
         self._ss_on_exception_value = self._add_checkbox(
-            row=4, column=2, label="Hata Ekran Görüntüsü", enabled=self.config.webdriver.ss_on_exception
+            row=4, column=2, label="Hata Ekran Görüntüsü", enabled=config.webdriver.ss_on_exception
         )
         self._use_seleniumbase_value = self._add_checkbox(
             row=5,
             column=1,
             label="SeleniumBase UC Modu Kullan",
-            enabled=self.config.webdriver.use_seleniumbase,
+            enabled=config.webdriver.use_seleniumbase,
         )
 
     def get_webdriver_config(self) -> dict[str, str]:
@@ -251,79 +251,79 @@ class BehaviorFrame(customtkinter.CTkFrame):
         self._title.grid(row=0, column=0, columnspan=7, padx=10, pady=10, sticky="ew")
 
         self._query_input = self._add_input_field(
-            row=1, column=0, label="Sorgu", default_value=self.config.behavior.query
+            row=1, column=0, label="Sorgu", default_value=config.behavior.query
         )
         self._2captcha_apikey_input = self._add_input_field(
             row=1,
             column=4,
             label="2captcha API Anahtarı",
-            default_value=self.config.behavior.twocaptcha_apikey,
+            default_value=config.behavior.twocaptcha_apikey,
         )
 
         self._ad_page_min_wait_input = self._add_input_field(
             row=2,
             column=0,
             label="Reklam sayfası min bekleme",
-            default_value=self.config.behavior.ad_page_min_wait,
+            default_value=config.behavior.ad_page_min_wait,
         )
         self._ad_page_max_wait_input = self._add_input_field(
             row=2,
             column=4,
             label="Reklam sayfası max bekleme",
-            default_value=self.config.behavior.ad_page_max_wait,
+            default_value=config.behavior.ad_page_max_wait,
         )
 
         self._nonad_page_min_wait_input = self._add_input_field(
             row=3,
             column=0,
             label="Reklam olmayan sayfa min bekleme",
-            default_value=self.config.behavior.nonad_page_min_wait,
+            default_value=config.behavior.nonad_page_min_wait,
         )
         self._nonad_page_max_wait_input = self._add_input_field(
             row=3,
             column=4,
             label="Reklam olmayan sayfa max bekleme",
-            default_value=self.config.behavior.nonad_page_max_wait,
+            default_value=config.behavior.nonad_page_max_wait,
         )
 
         self._running_interval_start_input = self._add_input_field(
             row=4,
             column=0,
             label="Çalışma aralığı başlangıç",
-            default_value=self.config.behavior.running_interval_start,
+            default_value=config.behavior.running_interval_start,
         )
         self._running_interval_end_input = self._add_input_field(
             row=4,
             column=4,
             label="Çalışma aralığı bitiş",
-            default_value=self.config.behavior.running_interval_end,
+            default_value=config.behavior.running_interval_end,
         )
 
         self._max_scroll_limit_input = self._add_input_field(
             row=5,
             column=0,
             label="Maksimum kaydırma limiti",
-            default_value=str(self.config.behavior.max_scroll_limit),
+            default_value=str(config.behavior.max_scroll_limit),
         )
         self._click_order_input = self._add_input_field(
-            row=5, column=4, label="Tıklama sırası", default_value=self.config.behavior.click_order
+            row=5, column=4, label="Tıklama sırası", default_value=config.behavior.click_order
         )
 
         self._browser_count_input = self._add_input_field(
-            row=6, column=0, label="Tarayıcı sayısı", default_value=self.config.behavior.browser_count
+            row=6, column=0, label="Tarayıcı sayısı", default_value=config.behavior.browser_count
         )
         self._multiprocess_style_input = self._add_input_field(
             row=6,
             column=4,
             label="Çoklu işlem stili",
-            default_value=self.config.behavior.multiprocess_style,
+            default_value=config.behavior.multiprocess_style,
         )
 
         self._loop_wait_time_input = self._add_input_field(
-            row=7, column=0, label="Döngü bekleme süresi", default_value=self.config.behavior.loop_wait_time
+            row=7, column=0, label="Döngü bekleme süresi", default_value=config.behavior.loop_wait_time
         )
         self._wait_factor_input = self._add_input_field(
-            row=7, column=4, label="Bekleme faktörü", default_value=self.config.behavior.wait_factor
+            row=7, column=4, label="Bekleme faktörü", default_value=config.behavior.wait_factor
         )
 
         excludes_label = customtkinter.CTkLabel(self, text="Hariç tutulacaklar")
@@ -333,28 +333,28 @@ class BehaviorFrame(customtkinter.CTkFrame):
             self, height=self.relative_height, corner_radius=10
         )
         self._excludes_input.grid(row=8, column=1, columnspan=6, padx=10, pady=5, sticky="ew")
-        self._excludes_input.insert("1.0", self.config.behavior.excludes)
+        self._excludes_input.insert("1.0", config.behavior.excludes)
 
         self._check_shopping_ads_value = self._add_checkbox(
-            row=9, column=0, label="Alışveriş reklamlarını kontrol et", enabled=self.config.behavior.check_shopping_ads
+            row=9, column=0, label="Alışveriş reklamlarını kontrol et", enabled=config.behavior.check_shopping_ads
         )
         self._random_mouse_value = self._add_checkbox(
-            row=9, column=1, label="Rastgele fare", enabled=self.config.behavior.random_mouse
+            row=9, column=1, label="Rastgele fare", enabled=config.behavior.random_mouse
         )
         self._custom_cookies_value = self._add_checkbox(
-            row=9, column=2, label="Özel çerezler", enabled=self.config.behavior.custom_cookies
+            row=9, column=2, label="Özel çerezler", enabled=config.behavior.custom_cookies
         )
         self._hooks_enabled_value = self._add_checkbox(
-            row=9, column=3, label="Hook'lar aktif", enabled=self.config.behavior.hooks_enabled
+            row=9, column=3, label="Hook'lar aktif", enabled=config.behavior.hooks_enabled
         )
         self._telegram_enabled_value = self._add_checkbox(
-            row=9, column=4, label="Telegram aktif", enabled=self.config.behavior.telegram_enabled
+            row=9, column=4, label="Telegram aktif", enabled=config.behavior.telegram_enabled
         )
         self._send_to_android_value = self._add_checkbox(
-            row=9, column=5, label="Android'e gönder", enabled=self.config.behavior.send_to_android
+            row=9, column=5, label="Android'e gönder", enabled=config.behavior.send_to_android
         )
         self._request_boost_value = self._add_checkbox(
-            row=9, column=6, label="İstek artırımı", enabled=self.config.behavior.request_boost
+            row=9, column=6, label="İstek artırımı", enabled=config.behavior.request_boost
         )
 
     def get_behavior_config(self) -> dict[str, str]:
@@ -507,7 +507,6 @@ class ConfigGUI(customtkinter.CTk):
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1)
 
-        self.config = ConfigReader()
         self.paths_frame = PathsFrame(self)
         self.paths_frame.grid(row=0, column=0, padx=10, sticky="nsew")
 
@@ -538,7 +537,7 @@ class ConfigGUI(customtkinter.CTk):
 
         logger.info("Yapılandırma başarıyla kaydedildi.")
 
-        self.config.read_parameters()
+        config.read_parameters()
 
     def ad_clicker_script(self):
         """Run the ad_clicker.py script"""

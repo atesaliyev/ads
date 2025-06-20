@@ -276,7 +276,6 @@ def get_queries() -> list[str]:
     :returns: List of queries
     """
 
-    config = ConfigReader()
     queries = []
     filepath = Path(config.general.query_file)
 
@@ -451,7 +450,6 @@ def take_screenshot(driver: undetected_chromedriver.Chrome) -> None:
     :param driver: Selenium Chrome webdriver instance
     """
 
-    config = ConfigReader()
     now = datetime.now().strftime("%d-%m-%Y_%H:%M:%S")
     filename = f"exception_ss_{now}.png"
 

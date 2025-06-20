@@ -1085,7 +1085,7 @@ class SearchController:
 
                 if not self._twocaptcha_apikey:
                     logger.info("Please try with a different proxy or enable 2captcha service.")
-                    logger.info(self._stats)
+                    logger.info(self.stats)
                     raise SystemExit()
 
                 cookies = ";".join(

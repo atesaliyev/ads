@@ -122,15 +122,25 @@ class CustomChrome(undetected_chromedriver.Chrome):
 def create_webdriver(
     proxy: str, user_agent: Optional[str] = None, plugin_folder_name: Optional[str] = None
 ) -> tuple[undetected_chromedriver.Chrome, Optional[str]]:
-    """Create Selenium Chrome webdriver instance"""
+    """Create Selenium Chrome webdriver instance
+
+    :type proxy: str
+    :param proxy: Proxy to use in ip:port or user:pass@host:port format
+    :type user_agent: str
+    :param user_agent: User agent string
+    :type plugin_folder_name: str
+    :param plugin_folder_name: Plugin folder name for proxy
+    :rtype: tuple
+    :returns: (undetected_chromedriver.Chrome, country_code) pair
+    """
+
+    if config.webdriver.use_seleniumbase:
+        logger.debug("Using SeleniumBase...")
+        return create_seleniumbase_driver(proxy, user_agent)
 
     geolocation_db_client = GeolocationDB()
 
     chrome_options = undetected_chromedriver.ChromeOptions()
-    
-    # Reverting all experimental options that caused crashes.
-    # We will rely on the default protections of undetected_chromedriver.
-    
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--no-first-run")
     chrome_options.add_argument("--no-service-autorun")
@@ -256,9 +266,7 @@ def create_webdriver(
             use_subprocess=False,
         )
 
-    # The call to _execute_stealth_js_code is removed to prevent crashes.
-    # _execute_stealth_js_code(driver)
-
+    # driver.maximize_window() is commented out to prevent errors
     sleep(1 * config.behavior.wait_factor)
     _shift_window_position(driver)
 
@@ -411,5 +419,80 @@ def _get_driver_exe_path() -> str:
 
 
 def _execute_stealth_js_code(driver: Union[undetected_chromedriver.Chrome, seleniumbase.Driver]):
-    """This function is no longer called to prevent driver crashes."""
-    pass
+    """Execute the stealth JS code to prevent detection
+
+    Signature changes can be tested by loading the following addresses
+    - https://browserleaks.com/canvas
+    - https://browserleaks.com/webrtc
+    - https://browserleaks.com/webgl
+
+    :type driver: Union[undetected_chromedriver.Chrome, seleniumbase.Driver]
+    :param driver: WebDriver instance
+    """
+
+    stealth_js = r"""
+    (() => {
+    // 1) Random vendor/platform/WebGL info
+    const vendors = ["Intel Inc.","NVIDIA Corporation","AMD","Google Inc."];
+    const renderers = ["ANGLE (Intel® Iris™ Graphics)","ANGLE (NVIDIA GeForce)","WebKit WebGL"];
+    const vendor = vendors[Math.floor(Math.random()*vendors.length)];
+    const renderer = renderers[Math.floor(Math.random()*renderers.length)];
+    Object.defineProperty(navigator, "vendor", { get: ()=>vendor });
+    Object.defineProperty(navigator, "platform", { get: ()=>["Win32","Linux x86_64","MacIntel"][Math.floor(Math.random()*3)] });
+
+    // 2) Canvas 2D noise
+    const rawToDataURL = HTMLCanvasElement.prototype.toDataURL;
+    HTMLCanvasElement.prototype.toDataURL = function(type, ...args) {
+        const ctx = this.getContext("2d");
+        const image = ctx.getImageData(0,0,this.width,this.height);
+        for(let i=0;i<image.data.length;i+=4){
+        const noise = (Math.random()-0.5)*2; // -1..+1
+        image.data[i]   = image.data[i]+noise;    // R
+        image.data[i+1] = image.data[i+1]+noise;  // G
+        image.data[i+2] = image.data[i+2]+noise;  // B
+        }
+        ctx.putImageData(image,0,0);
+        return rawToDataURL.apply(this,[type,...args]);
+    };
+
+    // 3) Canvas toBlob noise
+    const rawToBlob = HTMLCanvasElement.prototype.toBlob;
+    HTMLCanvasElement.prototype.toBlob = function(cb, type, quality) {
+        const ctx = this.getContext("2d");
+        const image = ctx.getImageData(0,0,this.width,this.height);
+        for(let i=0;i<image.data.length;i+=4){
+        const noise = (Math.random()-0.5)*2;
+        image.data[i]   += noise;
+        image.data[i+1] += noise;
+        image.data[i+2] += noise;
+        }
+        ctx.putImageData(image,0,0);
+        return rawToBlob.call(this,cb,type,quality);
+    };
+
+    // 4) WebGL patch: vendor/renderer
+    const getParam = WebGLRenderingContext.prototype.getParameter;
+    WebGLRenderingContext.prototype.getParameter = function(param) {
+        if(param === 37445) return vendor;    // UNMASKED_VENDOR_WEBGL
+        if(param === 37446) return renderer;  // UNMASKED_RENDERER_WEBGL
+        return getParam.call(this,param);
+    };
+
+    // 5) WebRTC IP leak prevention
+    const OrigRTCPeer = window.RTCPeerConnection;
+    window.RTCPeerConnection = function(cfg, opts) {
+        const pc = new OrigRTCPeer(cfg, opts);
+        const origCreateOffer = pc.createOffer;
+        pc.createOffer = function() {
+        return origCreateOffer.apply(this).then(o => {
+            o.sdp = o.sdp.replace(/^a=candidate:.+$/gm,"");
+            return o;
+        });
+        };
+        return pc;
+    };
+    window.RTCPeerConnection.prototype = OrigRTCPeer.prototype;
+    })();
+    """
+
+    driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {"source": stealth_js})

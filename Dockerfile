@@ -18,9 +18,6 @@ RUN apt-get install -y google-chrome-stable && rm -rf /var/lib/apt/lists/*
 # set the working directory to /src
 WORKDIR /src
 
-# Create logs directory
-RUN mkdir -p /src/logs
-
 # upgrade pip
 RUN python -m pip install --no-cache-dir --upgrade pip
 

@@ -38,6 +38,7 @@ def _inside_running_interval() -> bool:
 
 
 def main() -> None:
+
     command = ["python", "run_ad_clicker.py"]
 
     while True:

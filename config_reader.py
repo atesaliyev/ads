@@ -55,43 +55,68 @@ class BehaviorParams:
 
 
 class ConfigReader:
-    """Config reader for the bot"""
+    """Config file reader"""
 
-    def __init__(self, config_file: str = "config.json") -> None:
-        self.config_file = config_file
-        self._config = self._load_config()
+    def __init__(self) -> None:
+        self.general = None
+        self.webdriver = None
+        self.behavior = None
 
-        # Dynamically load configuration sections as attributes
-        for section, values in self._config.items():
-            setattr(self, section, self._Section(values))
+    def read_parameters(self) -> None:
+        """Read parameters from the config.json file"""
 
-    def _load_config(self) -> dict:
-        """Load configuration from json file"""
-        try:
-            with open(self.config_file, "r", encoding="utf-8") as file:
-                return json.load(file)
-        except FileNotFoundError:
-            logger.error(f"Configuration file '{self.config_file}' not found.")
-            raise SystemExit()
-        except json.JSONDecodeError:
-            logger.error(f"Error decoding JSON from '{self.config_file}'.")
-            raise SystemExit()
+        with open("config.json", encoding="utf-8") as config_file:
+            try:
+                config = json.loads(config_file.read())
+            except Exception:
+                logger.error("Failed to read config file. Check format and try again.")
+                raise SystemExit()
 
-    class _Section:
-        """Represents a section of the configuration"""
-        def __init__(self, data: dict):
-            for key, value in data.items():
-                setattr(self, key, value)
-        
-        def __getattr__(self, name):
-            # If an attribute is not found, return None instead of raising an error
-            return None
+        self.general = GeneralParams(
+            query_file=config["general"]["query_file"],
+            domains=config["general"]["domains"],
+            domain_mapping=config["general"]["domain_mapping"],
+            multi_browser_in_use=config["general"]["multi_browser_in_use"],
+            run_on_startup=config["general"]["run_on_startup"],
+        )
 
-    def __getattr__(self, name):
-        # If a section is not found, return an empty Section object
-        # which will return None for any attribute access.
-        return self._Section({})
+        self.webdriver = WebdriverParams(
+            browser=config["webdriver"]["browser"],
+            incognito=config["webdriver"]["incognito"],
+            auth=config["webdriver"]["auth"],
+            proxy_file=config["webdriver"]["proxy_file"],
+            country_domain=config["webdriver"]["country_domain"],
+            language_from_proxy=config["webdriver"]["language_from_proxy"],
+            use_seleniumbase=config["webdriver"]["use_seleniumbase"],
+            window_size=config["webdriver"]["window_size"],
+            shift_windows=config["webdriver"]["shift_windows"],
+            check_shopping_ads=config["webdriver"]["check_shopping_ads"],
+            ss_on_exception=config["webdriver"]["ss_on_exception"],
+        )
 
-# Create a single, globally accessible instance of the config reader.
-# This can be imported by other modules.
+        self.behavior = BehaviorParams(
+            ad_click_probability=config["behavior"]["ad_click_probability"],
+            max_ad_clicks_per_query=config["behavior"]["max_ad_clicks_per_query"],
+            max_non_ad_clicks_per_query=config["behavior"]["max_non_ad_clicks_per_query"],
+            max_shopping_ad_clicks_per_query=config["behavior"]["max_shopping_ad_clicks_per_query"],
+            max_total_clicks_per_query=config["behavior"]["max_total_clicks_per_query"],
+            wait_factor=config["behavior"]["wait_factor"],
+            ad_page_min_wait=config["behavior"]["ad_page_min_wait"],
+            ad_page_max_wait=config["behavior"]["ad_page_max_wait"],
+            nonad_page_min_wait=config["behavior"]["nonad_page_min_wait"],
+            nonad_page_max_wait=config["behavior"]["nonad_page_max_wait"],
+            random_mouse=config["behavior"]["random_mouse"],
+            custom_cookies=config["behavior"]["custom_cookies"],
+            delete_cookies=config["behavior"]["delete_cookies"],
+            hooks_enabled=config["behavior"]["hooks_enabled"],
+            twocaptcha_apikey=config["behavior"]["twocaptcha_apikey"],
+            telegram_enabled=config["behavior"]["telegram_enabled"],
+            max_scroll_limit=config["behavior"]["max_scroll_limit"],
+            excludes=config["behavior"]["excludes"],
+            check_shopping_ads=config["behavior"]["check_shopping_ads"],
+            click_order=config["behavior"]["click_order"],
+        )
+
+
 config = ConfigReader()
+config.read_parameters()

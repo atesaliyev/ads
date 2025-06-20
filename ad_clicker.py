@@ -24,7 +24,7 @@ from utils import (
 )
 from webdriver import create_webdriver
 
-# Conditionally import telegram notifier based on config
+
 if config.behavior.telegram_enabled:
     from telegram_notifier import notify_matching_ads, start_bot
 
@@ -130,17 +130,22 @@ def main():
         update_log_formats(args.id)
 
     if args.query:
-        queries = [args.query]
-        logger.info(f"Received single query from command line: '{args.query}'")
+        query = args.query
     else:
-        queries = get_queries()
+        if not config.behavior.query:
+            logger.error("Fill the query parameter!")
+            raise SystemExit()
 
-    # Get proxies from file
+        query = config.behavior.query
+
     if args.proxy:
         proxy = args.proxy
-    elif config.webdriver.proxy_file:
+    elif config.paths.proxy_file:
         proxies = get_proxies()
-        proxy = random.choice(proxies) if proxies else None
+        logger.debug(f"Proxies: {proxies}")
+        proxy = random.choice(proxies)
+    elif config.webdriver.proxy:
+        proxy = config.webdriver.proxy
     else:
         proxy = None
 
@@ -168,7 +173,7 @@ def main():
     try:
         search_controller = SearchController(
             driver,
-            queries[0],
+            query,
             country_code,
             proxy=proxy,
             user_agent=user_agent,
@@ -189,7 +194,7 @@ def main():
             logger.info("No ads found in the search results!")
 
             if config.behavior.telegram_enabled:
-                notify_matching_ads(queries[0], links=None, stats=search_controller.stats)
+                notify_matching_ads(query, links=None, stats=search_controller.stats)
         else:
             logger.debug(f"Selected click order: {config.behavior.click_order}")
 
@@ -348,7 +353,7 @@ def main():
                 hooks.after_clicks_hook(driver)
 
             if config.behavior.telegram_enabled:
-                notify_matching_ads(queries[0], links=ads + shopping_ads, stats=search_controller.stats)
+                notify_matching_ads(query, links=ads + shopping_ads, stats=search_controller.stats)
 
             logger.info(search_controller.stats)
 
