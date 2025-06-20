@@ -130,13 +130,10 @@ def main():
         update_log_formats(args.id)
 
     if args.query:
-        query = args.query
+        queries = [args.query]
+        logger.info(f"Received single query from command line: '{args.query}'")
     else:
-        if not config.behavior.query:
-            logger.error("Fill the query parameter!")
-            raise SystemExit()
-
-        query = config.behavior.query
+        queries = get_queries()
 
     if args.proxy:
         proxy = args.proxy
@@ -173,7 +170,7 @@ def main():
     try:
         search_controller = SearchController(
             driver,
-            query,
+            queries[0],
             country_code,
             proxy=proxy,
             user_agent=user_agent,
@@ -194,7 +191,7 @@ def main():
             logger.info("No ads found in the search results!")
 
             if config.behavior.telegram_enabled:
-                notify_matching_ads(query, links=None, stats=search_controller.stats)
+                notify_matching_ads(queries[0], links=None, stats=search_controller.stats)
         else:
             logger.debug(f"Selected click order: {config.behavior.click_order}")
 
@@ -353,7 +350,7 @@ def main():
                 hooks.after_clicks_hook(driver)
 
             if config.behavior.telegram_enabled:
-                notify_matching_ads(query, links=ads + shopping_ads, stats=search_controller.stats)
+                notify_matching_ads(queries[0], links=ads + shopping_ads, stats=search_controller.stats)
 
             logger.info(search_controller.stats)
 
