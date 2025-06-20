@@ -21,7 +21,6 @@ class WebdriverParams:
     incognito: bool
     auth: bool
     proxy_file: Optional[str]
-    static_proxy: Optional[str]
     country_domain: bool
     language_from_proxy: bool
     use_seleniumbase: bool
@@ -86,7 +85,6 @@ class ConfigReader:
             incognito=config["webdriver"]["incognito"],
             auth=config["webdriver"]["auth"],
             proxy_file=config["webdriver"]["proxy_file"],
-            static_proxy=config["webdriver"].get("static_proxy"),
             country_domain=config["webdriver"]["country_domain"],
             language_from_proxy=config["webdriver"]["language_from_proxy"],
             use_seleniumbase=config["webdriver"]["use_seleniumbase"],

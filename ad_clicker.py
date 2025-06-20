@@ -12,6 +12,7 @@ import hooks
 from clicklogs_db import ClickLogsDB
 from config_reader import config
 from logger import logger, update_log_formats
+from proxy import get_proxies
 from search_controller import SearchController, update_click_stats
 from utils import (
     get_domains,
@@ -40,6 +41,11 @@ def get_arg_parser() -> ArgumentParser:
 
     arg_parser = ArgumentParser(add_help=False, usage="See README.md file")
     arg_parser.add_argument("-q", "--query", help="Search query")
+    arg_parser.add_argument(
+        "-p",
+        "--proxy",
+        help="""Use the given proxy in "ip:port" or "username:password@host:port" format""",
+    )
     arg_parser.add_argument("--id", help="Browser id for multiprocess run")
     arg_parser.add_argument(
         "--enable_telegram", action="store_true", help="Enable telegram notifications"
@@ -132,8 +138,14 @@ def main():
 
         query = config.behavior.query
 
-    if config.webdriver.static_proxy and config.webdriver.auth:
-        proxy = config.webdriver.static_proxy
+    if args.proxy:
+        proxy = args.proxy
+    elif config.paths.proxy_file:
+        proxies = get_proxies()
+        logger.debug(f"Proxies: {proxies}")
+        proxy = random.choice(proxies)
+    elif config.webdriver.proxy:
+        proxy = config.webdriver.proxy
     else:
         proxy = None
 

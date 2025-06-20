@@ -86,20 +86,14 @@ def install_plugin(
 var config = {
     mode: "fixed_servers",
     rules: {
-      proxyForHttp: {
-        scheme: "http",
-        host: "%s",
-        port: %s
-      },
-      proxyForHttps: {
-        scheme: "http",
-        host: "%s",
-        port: %s
-      },
-      bypassList: ["localhost"]
+        singleProxy: {
+            scheme: "http",
+            host: "%s",
+            port: %s
+        },
+        bypassList: ["localhost"]
     }
 };
-
 chrome.proxy.settings.set({value: config, scope: "regular"}, function() {});
 
 function callbackFn(details) {
@@ -117,8 +111,6 @@ chrome.webRequest.onAuthRequired.addListener(
     ['blocking']
 );
 """ % (
-        proxy_host,
-        proxy_port,
         proxy_host,
         proxy_port,
         username,

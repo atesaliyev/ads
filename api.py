@@ -11,8 +11,7 @@ app = Flask(__name__)
 @app.route('/run', methods=['POST'])
 def run_script():
     """
-    Runs the ad_clicker.py script with a query from the POST request.
-    The proxy is now read from the static config file.
+    Runs the ad_clicker.py script with parameters from the POST request.
     Expects a JSON body with 'query'.
     """
     data = request.get_json()
@@ -21,12 +20,9 @@ def run_script():
         return jsonify({"status": "error", "message": "Missing 'query' in request body"}), 400
 
     query = data['query']
-    
-    # Proxy artık request'ten alınmıyor.
-    # proxy = data.get('proxy')
 
     # --- Construct the command to run the script ---
-    # Komut artık proxy parametresi (-p) almıyor.
+    # We use 'python' assuming it's in the PATH inside the Docker container.
     command = ["python", "ad_clicker.py", "-q", query]
 
     try:

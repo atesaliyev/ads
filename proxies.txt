@@ -1,0 +1,7 @@
+# Bu dosyaya proxy adreslerinizi her satıra bir tane gelecek şekilde ekleyin.
+# Formatlar:
+# kullanici:sifre@host:port
+# host:port
+
+dersdelisi2:cyOv4WS8RuTxg6rpn93U_country-TR@core-residential.evomi.com:1000
+
