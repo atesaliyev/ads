@@ -25,7 +25,7 @@
     "custom_cookies": false,
     "delete_cookies": false,
     "hooks_enabled": true,
-    "twocaptcha_apikey": "YOUR_2CAPTCHA_API_KEY_HERE",
+    "twocaptcha_apikey": "30f0a811e4b8cff2b639995cfa4fc489",
     "telegram_enabled": false,
     "max_scroll_limit": 5,
     "excludes": "",
