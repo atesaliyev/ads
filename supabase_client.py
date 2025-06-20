@@ -18,8 +18,8 @@ class SupabaseClient:
     """Supabase client for sending click data to database"""
 
     def __init__(self) -> None:
-        # Use IP address directly to bypass DNS issues
-        self.supabase_url = os.getenv("SUPABASE_URL", "").replace("gjhrgslbhajjpfudcegf.supabase.co", "104.18.38.10")
+        # Use IP address directly to bypass DNS issues, but with HTTP to avoid SSL
+        self.supabase_url = os.getenv("SUPABASE_URL", "").replace("https://", "http://").replace("gjhrgslbhajjpfudcegf.supabase.co", "104.18.38.10")
         self.supabase_key = os.getenv("SUPABASE_KEY", "")
         self.enabled = bool(self.supabase_url and self.supabase_key)
         
@@ -97,8 +97,7 @@ class SupabaseClient:
                 f"{self.supabase_url}/rest/v1/ads_clicker_log",
                 json=data,
                 headers=headers,
-                timeout=30,
-                verify=False  # Disable SSL verification for IP connection
+                timeout=30
             )
 
             if response.status_code == 201:
@@ -146,8 +145,7 @@ class SupabaseClient:
                 f"{self.supabase_url}/rest/v1/ads_clicker_log",
                 headers=headers,
                 params=query_params,
-                timeout=10,
-                verify=False  # Disable SSL verification for IP connection
+                timeout=10
             )
 
             if response.status_code == 200:
