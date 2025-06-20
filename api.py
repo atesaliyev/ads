@@ -27,9 +27,7 @@ def run_script():
     command = ["python", "ad_clicker.py", "-q", query]
 
     if proxy:
-        # Proxy string'ini komut satırına vermeden önce tırnak içine alıyoruz.
-        # Bu, özel karakterler içeren proxy'lerin doğru şekilde ayrıştırılmasına yardımcı olur.
-        command.extend(["-p", f'"{proxy}"'])
+        command.extend(["-p", proxy])
 
     try:
         # --- Run the script in the background ---
