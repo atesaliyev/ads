@@ -1,9 +1,12 @@
 {
+  "paths": {
+    "query_file": "sample_queries.txt",
+    "domains_file": "domains.txt",
+    "domain_mapping_file": "domain_mapping.json",
+    "proxy_file": "proxies.txt"
+  },
   "general": {
     "queries": [],
-    "query_file": "sample_queries.txt",
-    "domains": "domains.txt",
-    "domain_mapping": "domain_mapping.json",
     "multi_browser_in_use": false,
     "run_on_startup": true
   },
@@ -27,17 +30,16 @@
     "max_scroll_limit": 5,
     "excludes": "",
     "check_shopping_ads": false,
-    "click_order": 5
+    "click_order": 5,
+    "purge_db_on_startup": false
   },
   "database": {
-    "use_supabase": true,
-    "purge_db_on_startup": false
+    "use_supabase": true
   },
   "webdriver": {
     "browser": "chrome",
     "incognito": true,
     "auth": true,
-    "proxy_file": "proxies.txt",
     "country_domain": false,
     "language_from_proxy": true,
     "use_seleniumbase": false,
