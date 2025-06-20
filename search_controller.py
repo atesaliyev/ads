@@ -35,12 +35,44 @@ from utils import (
     resolve_redirect,
     boost_requests,
 )
+from telegram_notifier import send_notification
 
 
 LinkElement = selenium.webdriver.remote.webelement.WebElement
 AdList = list[tuple[LinkElement, str, str]]
 NonAdList = list[LinkElement]
 AllLinks = list[Union[AdList, NonAdList]]
+
+
+def update_click_stats(controller: "SearchController", url: str, category: str) -> None:
+    """Update click statistics
+
+    :type controller: SearchController
+    :param controller: SearchController instance
+    :type url: str
+    :param url: Clicked link url to save db
+    :type category: str
+    :param category: Specifies link category as Ad, Non-ad, or Shopping
+    """
+
+    click_time = datetime.now().strftime("%H:%M:%S")
+
+    if category == "Ad":
+        controller._stats.ads_clicked += 1
+    elif category == "Non-ad":
+        controller._stats.non_ads_clicked += 1
+    elif category == "Shopping":
+        controller._stats.shopping_ads_clicked += 1
+
+    controller._clicklogs_db_client.save_click(
+        site_url=url,
+        category=category,
+        query=controller._search_query,
+        click_time=click_time,
+        browser_id=controller._stats.browser_id,
+        proxy_used=controller._proxy,
+        user_agent=controller._user_agent,
+    )
 
 
 class SearchController:
@@ -368,7 +400,7 @@ class SearchController:
             else link_url
         )
 
-        self._update_click_stats(site_url, click_time, category)
+        update_click_stats(self, site_url, category)
 
         if config.behavior.request_boost:
             boost_requests(url)
@@ -434,7 +466,7 @@ class SearchController:
                     else (link_url if is_ad_element else self._driver.current_url)
                 )
 
-                self._update_click_stats(url, click_time, category)
+                update_click_stats(self, url, category)
 
                 if config.behavior.request_boost:
                     boost_requests(self._driver.current_url)
@@ -494,34 +526,6 @@ class SearchController:
             return random.choice(range(self._ad_page_min_wait, self._ad_page_max_wait))
         else:
             return random.choice(range(self._nonad_page_min_wait, self._nonad_page_max_wait))
-
-    def _update_click_stats(self, url: str, click_time: str, category: str) -> None:
-        """Update click statistics
-
-        :type url: str
-        :param url: Clicked link url to save db
-        :type click_time: str
-        :param click_time: Click time in hh:mm:ss format
-        :type category: str
-        :param category: Specifies link category as Ad, Non-ad, or Shopping
-        """
-
-        if category == "Ad":
-            self._stats.ads_clicked += 1
-        elif category == "Non-ad":
-            self._stats.non_ads_clicked += 1
-        elif category == "Shopping":
-            self._stats.shopping_ads_clicked += 1
-
-        self._clicklogs_db_client.save_click(
-            site_url=url,
-            category=category,
-            query=self._search_query,
-            click_time=click_time,
-            browser_id=self._stats.browser_id,
-            proxy_used=self._proxy,
-            user_agent=self._user_agent,
-        )
 
     def _start_random_scroll_thread(self) -> None:
         """Start a thread for random swipes on Android device"""

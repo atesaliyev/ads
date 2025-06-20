@@ -13,7 +13,7 @@ from clicklogs_db import ClickLogsDB
 from config_reader import config
 from logger import logger, update_log_formats
 from proxy import get_proxies
-from search_controller import SearchController
+from search_controller import SearchController, update_click_stats
 from utils import (
     get_domains,
     get_queries,
@@ -226,47 +226,54 @@ def main():
 
             # click on ads
             if ads:
-                logger.info(f"Found {len(ads)} ads")
+                logger.info(f"Found {len(ads)} ads to potentially click.")
                 hooks.before_ad_click_hook(driver)
+                
+                ads_clicked_count = 0
+                # We iterate by index to avoid stale element issues
+                for i in range(len(ads)):
+                    # Stop if we've reached the max number of clicks for this query
+                    if ads_clicked_count >= config.behavior.max_ad_clicks_per_query:
+                        logger.info("Reached max ad clicks for this query.")
+                        break
+                    
+                    # Re-find the ads on each iteration to ensure they are not stale
+                    current_ads = search_controller._get_ad_links()
+                    if i >= len(current_ads):
+                        break # Break if the ad list has shrunk
+                    
+                    ad_element, ad_link, ad_title = current_ads[i]
 
-                for ad, ad_link, ad_title in ads:
                     probability = random.random()
                     if probability > config.behavior.ad_click_probability:
-                        logger.info(f"Skipping click to [{ad_title}]")
+                        logger.info(f"Skipping click to [{ad_title}] due to probability.")
                         continue
 
-                    logger.info(f"Clicking to [{ad_title}]({ad_link})...")
+                    logger.info(f"Attempting to click ad: [{ad_title}]({ad_link})...")
 
                     try:
-                        # Use JavaScript click for reliability, as normal click can be intercepted.
-                        driver.execute_script("arguments[0].click();", ad)
-                        
-                        # After click, a new tab is opened. Switch to it.
-                        # The new tab is usually the last one in window_handles.
-                        sleep(2) # Give a moment for the new tab to open
+                        driver.execute_script("arguments[0].click();", ad_element)
+                        sleep(2)
                         driver.switch_to.window(driver.window_handles[-1])
                         
-                        # Log the click to the database using the search_controller object
-                        search_controller._update_click_stats("Ad", ad_link)
+                        update_click_stats(search_controller, ad_link, "Ad")
+                        logger.info(f"Successfully clicked and logged ad: {ad_title}")
+                        ads_clicked_count += 1
                         
-                        # Wait on the ad page for a random amount of time
                         wait_time = get_random_sleep(
                             config.behavior.ad_page_min_wait, config.behavior.ad_page_max_wait
                         )
                         logger.info(f"Waiting on ad page for {int(wait_time)} seconds...")
                         sleep(wait_time)
 
-                        # Close the ad tab and switch back to the main search results tab
                         driver.close()
                         driver.switch_to.window(driver.window_handles[0])
 
                     except Exception as e:
                         logger.error(f"Failed to click on [{ad_title}]! Reason: {e}")
-                        # If clicking fails, switch back to the main tab to continue
                         if len(driver.window_handles) > 1:
                             driver.switch_to.window(driver.window_handles[0])
 
-                    # sleep after each click attempt
                     sleep(get_random_sleep(2, 4) * config.behavior.wait_factor)
             else:
                 logger.info("No ads found in the search results!")
