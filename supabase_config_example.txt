@@ -1,0 +1,20 @@
+# Supabase Configuration Example
+# Create a .env file in the project root with these variables:
+
+# Your Supabase project URL (found in your project settings)
+SUPABASE_URL=https://your-project-id.supabase.co
+
+# Your Supabase anon/public key (found in your project settings)
+SUPABASE_KEY=your-supabase-anon-key
+
+# How to set environment variables in Windows PowerShell:
+# $env:SUPABASE_URL="https://your-project-id.supabase.co"
+# $env:SUPABASE_KEY="your-supabase-anon-key"
+
+# How to set environment variables in Windows Command Prompt:
+# set SUPABASE_URL=https://your-project-id.supabase.co
+# set SUPABASE_KEY=your-supabase-anon-key
+
+# How to set environment variables in Linux/Mac:
+# export SUPABASE_URL="https://your-project-id.supabase.co"
+# export SUPABASE_KEY="your-supabase-anon-key" 
