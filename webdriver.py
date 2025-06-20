@@ -166,6 +166,9 @@ def create_webdriver(
     if IS_POSIX:
         chrome_options.add_argument("--disable-setuid-sandbox")
 
+    # Start the browser maximized to avoid issues with new Chrome versions
+    chrome_options.add_argument("--start-maximized")
+
     optimization_features = [
         "OptimizationGuideModelDownloading",
         "OptimizationHintsFetching",
@@ -263,26 +266,11 @@ def create_webdriver(
             use_subprocess=False,
         )
 
-    if config.webdriver.window_size:
-        width, height = config.webdriver.window_size.split(",")
-        logger.debug(f"Setting window size as {width}x{height} px")
-        driver.set_window_size(width, height)
-    else:
-        logger.debug("Maximizing window...")
-        driver.maximize_window()
+    # driver.maximize_window() is commented out to prevent errors
+    sleep(1 * config.behavior.wait_factor)
+    _shift_window_position(driver)
 
-    if config.webdriver.shift_windows:
-        width, height = (
-            config.webdriver.window_size.split(",")
-            if config.webdriver.window_size
-            else (None, None)
-        )
-        _shift_window_position(driver, width, height)
-
-    _execute_stealth_js_code(driver)
-
-    return (driver, country_code) if config.webdriver.country_domain else (driver, None)
-
+    return driver, country_code
 
 def create_seleniumbase_driver(
     proxy: str, user_agent: Optional[str] = None
@@ -345,26 +333,11 @@ def create_seleniumbase_driver(
             f"Timezone of {proxy.split('@')[1] if config.webdriver.auth else proxy}: {timezone}"
         )
 
-    # handle window size and position
-    if config.webdriver.window_size:
-        width, height = config.webdriver.window_size.split(",")
-        logger.debug(f"Setting window size as {width}x{height} px")
-        driver.set_window_size(int(width), int(height))
-    else:
-        logger.debug("Maximizing window...")
-        driver.maximize_window()
+    sleep(1 * config.behavior.wait_factor)
 
-    if config.webdriver.shift_windows:
-        width, height = (
-            config.webdriver.window_size.split(",")
-            if config.webdriver.window_size
-            else (None, None)
-        )
-        _shift_window_position(driver, width, height)
+    _shift_window_position(driver)
 
-    _execute_stealth_js_code(driver)
-
-    return (driver, country_code) if config.webdriver.country_domain else (driver, None)
+    return driver, country_code
 
 
 def _shift_window_position(
