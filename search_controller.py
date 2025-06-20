@@ -35,7 +35,6 @@ from utils import (
     resolve_redirect,
     boost_requests,
 )
-from telegram_notifier import send_notification
 
 
 LinkElement = selenium.webdriver.remote.webelement.WebElement
