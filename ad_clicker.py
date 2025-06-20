@@ -12,7 +12,6 @@ import hooks
 from clicklogs_db import ClickLogsDB
 from config_reader import config
 from logger import logger, update_log_formats
-from proxy import get_proxies
 from search_controller import SearchController, update_click_stats
 from utils import (
     get_domains,

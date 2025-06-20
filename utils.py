@@ -27,7 +27,6 @@ except ImportError:
 from config_reader import config
 from geolocation_db import GeolocationDB
 from logger import logger
-from proxy import get_proxies
 
 
 class Direction(Enum):
@@ -89,65 +88,61 @@ def get_location(geolocation_db_client: GeolocationDB, proxy: str) -> tuple[floa
     :returns: (latitude, longitude, country_code, timezone) tuple for the given proxy IP
     """
 
-    proxies_header = {"http": f"http://{proxy}", "https": f"http://{proxy}"}
-
+    proxies = {}
     ip_address = ""
+
+    if config.webdriver.auth and proxy:
+        # 'requests' kütüphanesi için doğru proxy formatını oluşturuyoruz.
+        # Format: http://user:pass@host:port
+        proxies = {
+            "http": f"http://{proxy}",
+            "https": f"http://{proxy}",
+        }
+    elif proxy:
+        # Kimlik doğrulamasız proxy'ler için format
+        proxies = {
+            "http": f"http://{proxy}",
+            "https": f"https://{proxy}",
+        }
 
     if config.webdriver.auth:
         for repeat in range(2):
             try:
-                response = requests.get("https://api.ipify.org", proxies=proxies_header, timeout=5)
+                # IP'yi proxy üzerinden almayı deniyoruz
+                response = requests.get("https://api.ipify.org", proxies=proxies, timeout=10)
+                response.raise_for_status()  # HTTP hatalarını kontrol et
                 ip_address = response.text
 
-                if not ip_address:
-                    raise Exception("Failed with https://api.ipify.org")
-
-                break
+                if ip_address:
+                    break
 
             except Exception as exp:
-                logger.debug(exp)
+                logger.debug(f"Failed to get IP from api.ipify.org: {exp}")
 
                 try:
                     logger.debug("Trying with ipv4.webshare.io...")
                     response = requests.get(
-                        "https://ipv4.webshare.io/", proxies=proxies_header, timeout=5
+                        "https://ipv4.webshare.io/", proxies=proxies, timeout=10
                     )
+                    response.raise_for_status()
                     ip_address = response.text
 
-                    if not ip_address:
-                        raise Exception("Failed with https://ipv4.webshare.io")
-
-                    break
-
-                except Exception as exp:
-                    logger.debug(exp)
-
-                    try:
-                        logger.debug("Trying with ipconfig.io...")
-                        response = requests.get(
-                            "https://ipconfig.io/json", proxies=proxies_header, timeout=5
-                        )
-                        ip_address = response.json().get("ip")
-
-                        if not ip_address:
-                            raise Exception("Failed with https://ipconfig.io/json")
-
+                    if ip_address:
                         break
 
-                    except Exception as exp:
-                        logger.debug(exp)
+                except Exception as exp:
+                    logger.debug(f"Failed to get IP from ipv4.webshare.io: {exp}")
+                    
+                    if repeat == 1:
+                        # Son deneme de başarısız olursa döngüden çık
+                        break
 
-                        if repeat == 1:
-                            break
-
-                        request_retry_timeout = 60 * config.behavior.wait_factor
-                        logger.info(f"Request will be resend after {request_retry_timeout} seconds")
-
-                        sleep(request_retry_timeout)
-
-            sleep(get_random_sleep(0.5, 1) * config.behavior.wait_factor)
+                    request_retry_timeout = 30  # Bekleme süresini 30 saniyeye düşürelim
+                    logger.info(f"Could not verify IP. Retrying after {request_retry_timeout} seconds...")
+                    sleep(request_retry_timeout)
+    
     else:
-        ip_address = proxy.split(":")[0]
+        ip_address = proxy.split(":")[0] if proxy else None
 
     if not ip_address:
         logger.info(f"Couldn't verify IP address for {proxy}!")
@@ -178,7 +173,7 @@ def get_location(geolocation_db_client: GeolocationDB, proxy: str) -> tuple[floa
             except Exception:
                 try:
                     response = requests.get(
-                        "https://ifconfig.co/json", proxies=proxies_header, timeout=5
+                        "https://ifconfig.co/json", proxies=proxies, timeout=5
                     )
                     country_code = response.json().get("country_iso")
                     timezone = response.json().get("time_zone")
@@ -212,7 +207,7 @@ def get_location(geolocation_db_client: GeolocationDB, proxy: str) -> tuple[floa
 
                 try:
                     response = requests.get(
-                        "https://ifconfig.co/json", proxies=proxies_header, timeout=5
+                        "https://ifconfig.co/json", proxies=proxies, timeout=5
                     )
                     latitude, longitude, country_code, timezone = (
                         response.json().get("latitude"),
@@ -231,7 +226,7 @@ def get_location(geolocation_db_client: GeolocationDB, proxy: str) -> tuple[floa
 
                     try:
                         response = requests.get(
-                            "https://ipconfig.io/json", proxies=proxies_header, timeout=5
+                            "https://ipconfig.io/json", proxies=proxies, timeout=5
                         )
                         latitude, longitude, country_code, timezone = (
                             response.json().get("latitude"),
