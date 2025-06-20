@@ -13,14 +13,14 @@ from clicklogs_db import ClickLogsDB
 from config_reader import config
 from logger import logger, update_log_formats
 from proxy import get_proxies
-from search_controller import SearchController
+from search_controller import SearchController, update_click_stats
 from utils import (
-    get_random_user_agent_string,
     get_domains,
+    get_queries,
+    get_random_user_agent_string,
     take_screenshot,
     generate_click_report,
     get_random_sleep,
-    update_click_stats,
 )
 from webdriver import create_webdriver
 
@@ -247,7 +247,7 @@ def main():
                         driver.switch_to.window(driver.window_handles[-1])
                         
                         # Log the click to the database
-                        update_click_stats("Ad", ad_link, search_controller)
+                        update_click_stats(search_controller, "Ad", ad_link)
                         
                         # Wait on the ad page for a random amount of time
                         wait_time = get_random_sleep(
@@ -274,7 +274,37 @@ def main():
             # click on non-ad links
             if non_ad_links:
                 logger.info(f"Found {len(non_ad_links)} non-ad links")
-                search_controller.click_links(non_ad_links)
+                
+                for link in non_ad_links:
+                    logger.info(f"Clicking to non-ad link [{link}]...")
+                    try:
+                        # Use JavaScript click for reliability
+                        driver.execute_script("arguments[0].click();", link)
+                        
+                        # After click, switch to the new tab
+                        sleep(2) # Give a moment for the new tab to open
+                        driver.switch_to.window(driver.window_handles[-1])
+                        
+                        # Log the click to the database
+                        update_click_stats(search_controller, "Non-ad", link.get_attribute("href"))
+
+                        # Wait on the page
+                        wait_time = get_random_sleep(
+                            config.behavior.nonad_page_min_wait, config.behavior.nonad_page_max_wait
+                        )
+                        logger.info(f"Waiting on page for {int(wait_time)} seconds...")
+                        sleep(wait_time)
+                        
+                        # Close the tab and switch back
+                        driver.close()
+                        driver.switch_to.window(driver.window_handles[0])
+
+                    except Exception as e:
+                        logger.error(f"Failed to click on non-ad link! Reason: {e}")
+                        if len(driver.window_handles) > 1:
+                            driver.switch_to.window(driver.window_handles[0])
+
+                    sleep(get_random_sleep(2, 4) * config.behavior.wait_factor)
 
             if config.behavior.hooks_enabled:
                 hooks.after_clicks_hook(driver)
