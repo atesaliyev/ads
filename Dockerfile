@@ -22,8 +22,18 @@ WORKDIR /src
 RUN python -m pip install --no-cache-dir --upgrade pip
 
 # install dependencies
-COPY ./requirements.txt /src
-RUN python -m pip install --no-cache-dir -r requirements.txt
+RUN python -m pip install --no-cache-dir \
+    customtkinter==5.2.1 \
+    openpyxl==3.1.2 \
+    PyAutoGUI==0.9.53 \
+    python-telegram-bot==20.6 \
+    selenium==4.32.0 \
+    seleniumbase==4.38.0 \
+    undetected-chromedriver==3.5.5 \
+    requests==2.32.3 \
+    python-dotenv==1.0.0 \
+    Flask==2.2.2 \
+    Werkzeug==2.2.2
 
 # copy the current directory contents into the image
 COPY . /src
