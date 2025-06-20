@@ -252,8 +252,11 @@ def main():
                     logger.info(f"Attempting to click ad: [{ad_title}]({ad_link})...")
 
                     try:
+                        # Store current URL before clicking
+                        current_url = driver.current_url
+                        
                         driver.execute_script("arguments[0].click();", ad_element)
-                        sleep(2)
+                        sleep(3)  # Wait a bit longer for any redirect
                         
                         # Check if new window opened
                         if len(driver.window_handles) > 1:
@@ -276,10 +279,26 @@ def main():
                                     driver.switch_to.window(driver.window_handles[0])
                             except Exception as e:
                                 logger.warning(f"Error switching back to main window: {e}")
-                                # If we can't switch back, the session might be invalid, break the loop
                                 break
                         else:
-                            logger.warning("No new window opened after clicking ad")
+                            # Check if URL changed (same-page redirect)
+                            new_url = driver.current_url
+                            if new_url != current_url:
+                                update_click_stats(search_controller, ad_link, "Ad")
+                                logger.info(f"Successfully clicked and logged ad (same page): {ad_title}")
+                                ads_clicked_count += 1
+                                
+                                wait_time = get_random_sleep(
+                                    config.behavior.ad_page_min_wait, config.behavior.ad_page_max_wait
+                                )
+                                logger.info(f"Waiting on ad page for {int(wait_time)} seconds...")
+                                sleep(wait_time)
+                                
+                                # Go back to search results
+                                driver.back()
+                                sleep(2)
+                            else:
+                                logger.warning("No new window opened and no URL change detected after clicking ad")
 
                     except Exception as e:
                         logger.error(f"Failed to click on [{ad_title}]! Reason: {e}")
@@ -289,7 +308,6 @@ def main():
                                 driver.switch_to.window(driver.window_handles[0])
                         except Exception as switch_error:
                             logger.warning(f"Could not switch back to main window: {switch_error}")
-                            # If we can't switch back, break the loop to avoid more errors
                             break
 
                     sleep(get_random_sleep(2, 4) * config.behavior.wait_factor)
