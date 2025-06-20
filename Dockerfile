@@ -40,4 +40,4 @@ p = Patcher()
 p.auto()
 EOF
 
-ENTRYPOINT ["python"]
+ENTRYPOINT ["python", "api.py"]
