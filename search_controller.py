@@ -854,249 +854,6 @@ class SearchController:
 
         return non_ad_links
 
-    def _close_cookie_dialog(self) -> None:
-        """If cookie dialog is opened, close it by accepting"""
-
-        logger.debug("Waiting for cookie dialog...")
-
-        sleep(get_random_sleep(3, 3.5) * config.behavior.wait_factor)
-
-        all_links = [
-            element.get_attribute("href")
-            for element in self._driver.find_elements(By.TAG_NAME, "a")
-            if isinstance(element.get_attribute("href"), str)
-        ]
-
-        for link in all_links:
-            if "policies.google.com" in link:
-                buttons = self._driver.find_elements(*self.COOKIE_DIALOG_BUTTON)[6:-2]
-                if len(buttons) < 6:
-                    buttons = self._driver.find_elements(*self.COOKIE_DIALOG_BUTTON)
-
-                for button in buttons:
-                    try:
-                        if (
-                            button.get_attribute("role") != "link"
-                            and button.get_attribute("style") != "display:none"
-                        ):
-                            logger.debug(f"Clicking button {button.get_attribute('outerHTML')}")
-                            self._driver.execute_script(
-                                "arguments[0].scrollIntoView(true);", button
-                            )
-                            sleep(get_random_sleep(0.5, 1) * config.behavior.wait_factor)
-                            button.click()
-                            sleep(get_random_sleep(1, 1.5) * config.behavior.wait_factor)
-
-                            try:
-                                search_input_box = self._driver.find_element(*self.SEARCH_INPUT)
-                                if not search_input_box.get_attribute("value"):
-                                    self._type_humanlike(search_input_box, self._search_query)
-                                    break
-                            except (
-                                ElementNotInteractableException,
-                                StaleElementReferenceException,
-                            ):
-                                pass
-
-                    except (
-                        ElementNotInteractableException,
-                        ElementClickInterceptedException,
-                        StaleElementReferenceException,
-                    ):
-                        pass
-
-                sleep(get_random_sleep(1, 1.5) * config.behavior.wait_factor)
-                break
-        else:
-            logger.debug("No cookie dialog found! Continue with search...")
-
-    def _is_scroll_at_the_end(self) -> bool:
-        """Check if scroll is at the end
-
-        :rtype: bool
-        :returns: Whether the scrollbar was reached to end or not
-        """
-
-        page_height = self._driver.execute_script("return document.body.scrollHeight;")
-        total_scrolled_height = self._driver.execute_script(
-            "return window.pageYOffset + window.innerHeight;"
-        )
-
-        return page_height - 1 <= total_scrolled_height
-
-    def _delete_cache_and_cookies(self) -> None:
-        """Delete browser cache, storage, and cookies"""
-
-        logger.debug("Deleting browser cache and cookies...")
-
-        try:
-            self._driver.delete_all_cookies()
-
-            self._driver.execute_cdp_cmd("Network.clearBrowserCache", {})
-            self._driver.execute_cdp_cmd("Network.clearBrowserCookies", {})
-            self._driver.execute_script("window.localStorage.clear();")
-            self._driver.execute_script("window.sessionStorage.clear();")
-
-        except Exception as exp:
-            if "not connected to DevTools" in str(exp):
-                logger.debug("Incognito mode is active. No need to delete cache. Skipping...")
-
-    def _set_start_url(self, country_code: str) -> None:
-        """Set start url according to country code of the proxy IP
-
-        :type country_code: str
-        :param country_code: Country code for the proxy IP
-        """
-
-        with open("domain_mapping.json", "r") as domains_file:
-            domains = json.load(domains_file)
-
-        country_domain = domains.get(country_code, "www.google.com")
-        self.URL = f"https://{country_domain}"
-
-        logger.debug(f"Start url was set to {self.URL}")
-
-    def _make_random_scrolls(self) -> None:
-        """Make random scrolls on page"""
-
-        logger.debug("Making random scrolls...")
-
-        directions = [Direction.DOWN]
-        directions += random.choices(
-            [Direction.UP] * 5 + [Direction.DOWN] * 5, k=random.choice(range(1, 5))
-        )
-
-        logger.debug(f"Direction choices: {[d.value for d in directions]}")
-
-        for direction in directions:
-            if direction == Direction.DOWN and not self._is_scroll_at_the_end():
-                self._driver.find_element(By.TAG_NAME, "body").send_keys(Keys.PAGE_DOWN)
-            elif direction == Direction.UP:
-                self._driver.find_element(By.TAG_NAME, "body").send_keys(Keys.PAGE_UP)
-
-            sleep(get_random_sleep(1, 3) * config.behavior.wait_factor)
-
-        self._driver.find_element(By.TAG_NAME, "body").send_keys(Keys.HOME)
-
-    def _make_random_swipes(self) -> None:
-        """Make random swipes on page"""
-
-        logger.debug("Making random swipes...")
-
-        directions = [Direction.DOWN, Direction.DOWN]
-        directions += random.choices(
-            [Direction.UP] * 5 + [Direction.DOWN] * 5, k=random.choice(range(1, 5))
-        )
-
-        logger.debug(f"Direction choices: {[d.value for d in directions]}")
-
-        for direction in directions:
-            if direction == Direction.DOWN:
-                self._send_swipe(direction=Direction.DOWN)
-
-            elif direction == Direction.UP:
-                self._send_swipe(direction=Direction.UP)
-
-            sleep(get_random_sleep(1, 2) * config.behavior.wait_factor)
-
-        HOME_KEYCODE = 122
-        adb_controller.send_keyevent(HOME_KEYCODE)  # go to top by sending Home key
-
-    def _send_swipe(self, direction: Direction) -> None:
-        """Send swipe action to mobile device
-
-        :type direction: Direction
-        :param direction: Direction to swipe
-        """
-
-        x_position = random.choice(range(100, 200))
-        duration = random.choice(range(100, 500))
-
-        if direction == Direction.DOWN:
-            y_start_position = random.choice(range(1000, 1500))
-            y_end_position = random.choice(range(500, 1000))
-
-        elif direction == Direction.UP:
-            y_start_position = random.choice(range(500, 1000))
-            y_end_position = random.choice(range(1000, 1500))
-
-        adb_controller.send_swipe(
-            x1=x_position,
-            y1=y_start_position,
-            x2=x_position,
-            y2=y_end_position,
-            duration=duration,
-        )
-
-    def _make_random_mouse_movements(self) -> None:
-        """Make random mouse movements"""
-
-        if self._random_mouse_enabled:
-            try:
-                import pyautogui
-
-                logger.debug("Making random mouse movements...")
-
-                screen_width, screen_height = pyautogui.size()
-                pyautogui.moveTo(screen_width / 2 - 300, screen_height / 2 - 200)
-
-                logger.debug(pyautogui.position())
-
-                ease_methods = [
-                    pyautogui.easeInQuad,
-                    pyautogui.easeOutQuad,
-                    pyautogui.easeInOutQuad,
-                ]
-
-                logger.debug("Going LEFT and DOWN...")
-
-                pyautogui.move(
-                    -random.choice(range(200, 300)),
-                    random.choice(range(250, 450)),
-                    1,
-                    random.choice(ease_methods),
-                )
-
-                logger.debug(pyautogui.position())
-
-                for _ in range(1, random.choice(range(3, 7))):
-                    direction = random.choice(list(Direction))
-                    ease_method = random.choice(ease_methods)
-
-                    logger.debug(f"Going {direction.value}...")
-
-                    if direction == Direction.LEFT:
-                        pyautogui.move(-(random.choice(range(100, 200))), 0, 0.5, ease_method)
-
-                    elif direction == Direction.RIGHT:
-                        pyautogui.move(random.choice(range(200, 400)), 0, 0.3, ease_method)
-
-                    elif direction == Direction.UP:
-                        pyautogui.move(0, -(random.choice(range(100, 200))), 1, ease_method)
-                        pyautogui.scroll(random.choice(range(1, 7)))
-
-                    elif direction == Direction.DOWN:
-                        pyautogui.move(0, random.choice(range(150, 300)), 0.7, ease_method)
-                        pyautogui.scroll(-random.choice(range(1, 7)))
-
-                    else:
-                        pyautogui.move(
-                            random.choice(range(100, 200)),
-                            random.choice(range(150, 250)),
-                            1,
-                            ease_method,
-                        )
-
-                    logger.debug(pyautogui.position())
-
-            except pyautogui.FailSafeException:
-                logger.debug("The mouse cursor was moved to one of the screen corners!")
-
-                pyautogui.FAILSAFE = False
-
-                logger.debug("Moving cursor to center...")
-                pyautogui.moveTo(screen_width / 2, screen_height / 2)
-
     def _check_captcha(self) -> None:
         """Check if captcha exists and solve it if 2captcha is used, otherwise exit"""
 
@@ -1158,6 +915,35 @@ class SearchController:
 
         except NoSuchElementException:
             logger.debug("No captcha seen. Continue to search...")
+
+    def _close_cookie_dialog(self) -> None:
+        """Close cookie dialog if it exists"""
+        try:
+            # More robust way to find the "Accept all" button
+            # Google uses different IDs, we try the most common ones.
+            possible_button_selectors = [
+                (By.ID, "L2AGLb"),
+                (By.XPATH, "//button[div[contains(text(), 'Accept all')]]"),
+                (By.XPATH, "//button[div[contains(text(), 'Alle akzeptieren')]]"),
+                (By.XPATH, "//button[div[contains(text(), 'Приемане на всички')]]"),
+            ]
+
+            for by, selector in possible_button_selectors:
+                try:
+                    logger.debug(f"Trying to find cookie button with: {selector}")
+                    wait = WebDriverWait(self._driver, 5)
+                    cookie_button = wait.until(EC.element_to_be_clickable((by, selector)))
+                    
+                    logger.info("Found cookie consent button. Clicking it...")
+                    cookie_button.click()
+                    sleep(get_random_sleep(1, 2)) # Wait for the dialog to disappear
+                    return # Exit after successful click
+                except TimeoutException:
+                    logger.debug(f"Cookie button not found with: {selector}")
+                    continue # Try the next selector
+
+        except Exception as e:
+            logger.debug(f"An error occurred while trying to close cookie dialog: {e}")
 
     def _close_choose_location_popup(self) -> None:
         """Close 'Choose location for search results' popup"""
