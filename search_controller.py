@@ -219,6 +219,12 @@ class SearchController:
 
         except TimeoutException:
             logger.error("Timed out waiting for results!")
+            
+            # Take a screenshot for debugging
+            screenshot_path = "logs/debug_screenshot.png"
+            self._driver.save_screenshot(screenshot_path)
+            logger.info(f"Screenshot saved to {screenshot_path} for debugging.")
+
             self.end_search()
 
         return (ad_links, non_ad_links, shopping_ad_links)
