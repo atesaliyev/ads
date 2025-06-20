@@ -26,7 +26,8 @@
     "telegram_enabled": false,
     "max_scroll_limit": 5,
     "excludes": "",
-    "check_shopping_ads": false
+    "check_shopping_ads": false,
+    "click_order": 5
   },
   "database": {
     "use_supabase": true,

@@ -51,6 +51,7 @@ class BehaviorParams:
     max_scroll_limit: int
     excludes: Optional[str]
     check_shopping_ads: bool
+    click_order: int
 
 
 class ConfigReader:
@@ -113,6 +114,7 @@ class ConfigReader:
             max_scroll_limit=config["behavior"]["max_scroll_limit"],
             excludes=config["behavior"]["excludes"],
             check_shopping_ads=config["behavior"]["check_shopping_ads"],
+            click_order=config["behavior"]["click_order"],
         )
 
 
