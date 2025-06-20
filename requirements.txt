@@ -4,7 +4,9 @@ PyAutoGUI==0.9.53
 python-telegram-bot==20.6
 selenium==4.32.0
 seleniumbase==4.38.0
+selenium-wire==5.1.0
 undetected-chromedriver==3.5.5
 requests==2.32.3
 python-dotenv==1.0.0
 Flask==2.2.2
+Werkzeug==2.2.2
