@@ -860,23 +860,21 @@ class SearchController:
             logger.debug("Attempting to find and click cookie consent button...")
             wait = WebDriverWait(self._driver, 10)
             
-            # Google often uses the ID "L2AGLb" for the "Accept all" button.
-            # This is the most reliable way to find it.
+            # Use a more robust selector that finds the button regardless of language
             accept_button = wait.until(
-                EC.element_to_be_clickable((By.ID, "L2AGLb"))
+                EC.element_to_be_clickable((By.XPATH, "//*[text()='Accept all' or text()='Alle akzeptieren' or text()='Приемане на всички' or @id='L2AGLb']"))
             )
             
-            accept_button.click()
-            logger.info("Successfully clicked the 'Accept all' cookie button.")
+            # Use JavaScript click to bypass potential interception issues
+            self._driver.execute_script("arguments[0].click();", accept_button)
+            
+            logger.info("Successfully clicked the 'Accept all' cookie button via JavaScript.")
             # Wait a moment for the dialog to disappear
-            sleep(get_random_sleep(1.5, 2.5) * config.behavior.wait_factor)
+            sleep(get_random_sleep(2.0, 3.0) * config.behavior.wait_factor)
 
         except TimeoutException:
-            # If the button with ID "L2AGLb" is not found after 10 seconds,
-            # assume there is no cookie dialog or it's a different variant.
-            logger.debug("Cookie consent button not found, or no dialog present. Continuing...")
+            logger.debug("Cookie consent button not found. Continuing...")
         except Exception as e:
-            # Catch any other potential errors during the click.
             logger.error(f"An error occurred while trying to close cookie dialog: {e}")
 
     def _is_scroll_at_the_end(self) -> bool:
