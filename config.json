@@ -24,7 +24,8 @@
     "hooks_enabled": true,
     "twocaptcha_apikey": "YOUR_2CAPTCHA_API_KEY_HERE",
     "telegram_enabled": false,
-    "max_scroll_limit": 5
+    "max_scroll_limit": 5,
+    "excludes": ""
   },
   "database": {
     "use_supabase": true,

@@ -49,6 +49,7 @@ class BehaviorParams:
     twocaptcha_apikey: str
     telegram_enabled: bool
     max_scroll_limit: int
+    excludes: Optional[str]
 
 
 class ConfigReader:
@@ -109,6 +110,7 @@ class ConfigReader:
             twocaptcha_apikey=config["behavior"]["twocaptcha_apikey"],
             telegram_enabled=config["behavior"]["telegram_enabled"],
             max_scroll_limit=config["behavior"]["max_scroll_limit"],
+            excludes=config["behavior"]["excludes"],
         )
 
 
