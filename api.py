@@ -27,7 +27,10 @@ def run_script():
     command = ["python", "ad_clicker.py", "-q", query]
 
     if proxy:
-        command.extend(["-p", proxy])
+        # Gelen proxy string'inin başındaki ve sonundaki olası tırnak işaretlerini temizleyelim.
+        # Bu, web arayüzünden "proxy" veya 'proxy' şeklinde gelen girdileri standart hale getirir.
+        cleaned_proxy = proxy.strip('\'"')
+        command.extend(["-p", cleaned_proxy])
 
     try:
         # --- Run the script in the background ---
