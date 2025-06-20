@@ -13,7 +13,7 @@ from clicklogs_db import ClickLogsDB
 from config_reader import config
 from logger import logger, update_log_formats
 from proxy import get_proxies
-from search_controller import SearchController, update_click_stats
+from search_controller import SearchController
 from utils import (
     get_domains,
     get_queries,
@@ -246,8 +246,8 @@ def main():
                         sleep(2) # Give a moment for the new tab to open
                         driver.switch_to.window(driver.window_handles[-1])
                         
-                        # Log the click to the database
-                        update_click_stats(search_controller, "Ad", ad_link)
+                        # Log the click to the database using the search_controller object
+                        search_controller._update_click_stats("Ad", ad_link)
                         
                         # Wait on the ad page for a random amount of time
                         wait_time = get_random_sleep(
@@ -286,7 +286,7 @@ def main():
                         driver.switch_to.window(driver.window_handles[-1])
                         
                         # Log the click to the database
-                        update_click_stats(search_controller, "Non-ad", link.get_attribute("href"))
+                        search_controller._update_click_stats("Non-ad", link.get_attribute("href"))
 
                         # Wait on the page
                         wait_time = get_random_sleep(
