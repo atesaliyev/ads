@@ -41,13 +41,17 @@ COPY . /src
 # set display port to avoid crash
 ENV DISPLAY=:99
 
-# start Xvfb
-CMD Xvfb :99 -screen 0 1920x1080x16 -ac +extension GLX +render -noreset
-
 RUN python3 - <<EOF
 from undetected_chromedriver.patcher import Patcher
 p = Patcher()
 p.auto()
 EOF
 
-ENTRYPOINT ["python", "api.py"]
+# Create a startup script that starts Xvfb and then the API
+RUN echo '#!/bin/sh' > /src/start.sh && \
+    echo 'Xvfb :99 -screen 0 1920x1080x16 -ac +extension GLX +render -noreset &' >> /src/start.sh && \
+    echo 'exec python api.py' >> /src/start.sh && \
+    chmod +x /src/start.sh
+
+# Use the startup script as the entrypoint
+ENTRYPOINT ["/src/start.sh"]
