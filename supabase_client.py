@@ -97,7 +97,8 @@ class SupabaseClient:
                 f"{self.supabase_url}/rest/v1/ads_clicker_log",
                 json=data,
                 headers=headers,
-                timeout=30
+                timeout=30,
+                verify=False  # Disable SSL verification for IP connection
             )
 
             if response.status_code == 201:
@@ -145,7 +146,8 @@ class SupabaseClient:
                 f"{self.supabase_url}/rest/v1/ads_clicker_log",
                 headers=headers,
                 params=query_params,
-                timeout=10
+                timeout=10,
+                verify=False  # Disable SSL verification for IP connection
             )
 
             if response.status_code == 200:
