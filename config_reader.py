@@ -91,3 +91,7 @@ class ConfigReader:
         # If a section is not found, return an empty Section object
         # which will return None for any attribute access.
         return self._Section({})
+
+# Create a single, globally accessible instance of the config reader.
+# This can be imported by other modules.
+config = ConfigReader()

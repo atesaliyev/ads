@@ -10,7 +10,7 @@ from time import sleep
 
 import hooks
 from clicklogs_db import ClickLogsDB
-from config_reader import ConfigReader
+from config_reader import config
 from logger import logger, update_log_formats
 from proxy import get_proxies
 from search_controller import SearchController, update_click_stats
@@ -23,9 +23,6 @@ from utils import (
     get_random_sleep,
 )
 from webdriver import create_webdriver
-
-# Instantiate config at the module level to be accessible globally
-config = ConfigReader()
 
 # Conditionally import telegram notifier based on config
 if config.behavior.telegram_enabled:

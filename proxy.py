@@ -10,7 +10,7 @@ except ImportError:
 
     from selenium.webdriver import ChromeOptions
 
-from config_reader import ConfigReader
+from config_reader import config
 from logger import logger
 
 
@@ -19,7 +19,6 @@ def get_proxies() -> list:
     :rtype: list
     :returns: List of proxies
     """
-    config = ConfigReader()
     proxy_file = config.webdriver.proxy_file
     if not proxy_file:
         return []

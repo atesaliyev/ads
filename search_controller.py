@@ -24,7 +24,7 @@ from selenium.common.exceptions import (
 import hooks
 from adb import adb_controller
 from clicklogs_db import ClickLogsDB
-from config_reader import ConfigReader
+from config_reader import config
 from logger import logger
 from stats import SearchStats
 from utils import (
@@ -122,31 +122,29 @@ class SearchController:
         self._proxy = proxy
         self._user_agent = user_agent
         self._exclude_list = None
-        self._random_mouse_enabled = self.config.behavior.random_mouse
-        self._use_custom_cookies = self.config.behavior.custom_cookies
-        self._twocaptcha_apikey = self.config.behavior.twocaptcha_apikey
-        self._max_scroll_limit = self.config.behavior.max_scroll_limit
-        self._hooks_enabled = self.config.behavior.hooks_enabled
+        self._random_mouse_enabled = config.behavior.random_mouse
+        self._use_custom_cookies = config.behavior.custom_cookies
+        self._twocaptcha_apikey = config.behavior.twocaptcha_apikey
+        self._max_scroll_limit = config.behavior.max_scroll_limit
+        self._hooks_enabled = config.behavior.hooks_enabled
 
-        self._ad_page_min_wait = self.config.behavior.ad_page_min_wait
-        self._ad_page_max_wait = self.config.behavior.ad_page_max_wait
-        self._nonad_page_min_wait = self.config.behavior.nonad_page_min_wait
-        self._nonad_page_max_wait = self.config.behavior.nonad_page_max_wait
+        self._ad_page_min_wait = config.behavior.ad_page_min_wait
+        self._ad_page_max_wait = config.behavior.ad_page_max_wait
+        self._nonad_page_min_wait = config.behavior.nonad_page_min_wait
+        self._nonad_page_max_wait = config.behavior.nonad_page_max_wait
 
         self._android_device_id = None
 
         self._stats = SearchStats()
 
-        if self.config.behavior.excludes:
-            self._exclude_list = [item.strip() for item in self.config.behavior.excludes.split(",")]
+        if config.behavior.excludes:
+            self._exclude_list = [item.strip() for item in config.behavior.excludes.split(",")]
             logger.debug(f"Words to be excluded: {self._exclude_list}")
 
         if country_code:
             self._set_start_url(country_code)
 
         self._clicklogs_db_client = ClickLogsDB()
-
-        self.config = ConfigReader()
 
         self._load()
 
@@ -174,7 +172,7 @@ class SearchController:
         self._close_cookie_dialog()
 
         logger.info(f"Starting search for '{self._search_query}'")
-        sleep(get_random_sleep(1, 2) * self.config.behavior.wait_factor)
+        sleep(get_random_sleep(1, 2) * config.behavior.wait_factor)
 
         try:
             search_input_box = self._driver.find_element(*self.SEARCH_INPUT)
@@ -208,7 +206,7 @@ class SearchController:
         self._check_captcha()
 
         # wait 2 to 3 seconds before checking if results were loaded
-        sleep(get_random_sleep(2, 3) * self.config.behavior.wait_factor)
+        sleep(get_random_sleep(2, 3) * config.behavior.wait_factor)
 
         if not self._driver.find_elements(*self.RESULTS_CONTAINER):
             self._close_cookie_dialog()
@@ -220,7 +218,7 @@ class SearchController:
 
                 # sleep after entering search keyword by randomly selected amount
                 # between 2 to 3 seconds
-                sleep(get_random_sleep(2, 3) * self.config.behavior.wait_factor)
+                sleep(get_random_sleep(2, 3) * config.behavior.wait_factor)
 
         if self._hooks_enabled:
             hooks.after_query_sent_hook(self._driver, self._search_query)
@@ -244,7 +242,7 @@ class SearchController:
 
                 self._close_choose_location_popup()
 
-                if self.config.behavior.check_shopping_ads:
+                if config.behavior.check_shopping_ads:
                     shopping_ad_links = self._get_shopping_ad_links()
 
                 ad_links = self._get_ad_links()
@@ -282,7 +280,7 @@ class SearchController:
                 if self._hooks_enabled:
                     hooks.before_ad_click_hook(self._driver)
 
-                if self.config.behavior.send_to_android and self._android_device_id:
+                if config.behavior.send_to_android and self._android_device_id:
                     self._handle_android_click(ad_link_element, ad_link, True, category="Shopping")
                 else:
                     self._handle_browser_click(
@@ -317,7 +315,7 @@ class SearchController:
 
                 category = "Ad" if is_ad_element else "Non-ad"
 
-                if self.config.behavior.send_to_android and self._android_device_id:
+                if config.behavior.send_to_android and self._android_device_id:
                     self._handle_android_click(link_element, link_url, is_ad_element, category)
                 else:
                     self._handle_browser_click(
@@ -386,7 +384,7 @@ class SearchController:
         click_time = datetime.now().strftime("%H:%M:%S")
 
         # wait a little before starting random actions
-        sleep(get_random_sleep(2, 3) * self.config.behavior.wait_factor)
+        sleep(get_random_sleep(2, 3) * config.behavior.wait_factor)
 
         logger.debug(f"Current url on device: {url}")
 
@@ -403,15 +401,15 @@ class SearchController:
 
         update_click_stats(self, site_url, category)
 
-        if self.config.behavior.request_boost:
+        if config.behavior.request_boost:
             boost_requests(url)
 
-        wait_time = self._get_wait_time(is_ad_element) * self.config.behavior.wait_factor
+        wait_time = self._get_wait_time(is_ad_element) * config.behavior.wait_factor
         logger.debug(f"Waiting {wait_time} seconds on {category.lower()} page...")
         sleep(wait_time)
 
         adb_controller.close_browser()
-        sleep(get_random_sleep(0.5, 1) * self.config.behavior.wait_factor)
+        sleep(get_random_sleep(0.5, 1) * config.behavior.wait_factor)
 
     def _handle_browser_click(
         self,
@@ -453,7 +451,7 @@ class SearchController:
                 self._driver.switch_to.window(window_handle)
                 click_time = datetime.now().strftime("%H:%M:%S")
 
-                sleep(get_random_sleep(3, 5) * self.config.behavior.wait_factor)
+                sleep(get_random_sleep(3, 5) * config.behavior.wait_factor)
                 logger.debug(f"Current url on new tab: {self._driver.current_url}")
 
                 if self._hooks_enabled and category in ("Ad", "Shopping"):
@@ -469,10 +467,10 @@ class SearchController:
 
                 update_click_stats(self, url, category)
 
-                if self.config.behavior.request_boost:
+                if config.behavior.request_boost:
                     boost_requests(self._driver.current_url)
 
-                wait_time = self._get_wait_time(is_ad_element) * self.config.behavior.wait_factor
+                wait_time = self._get_wait_time(is_ad_element) * config.behavior.wait_factor
                 logger.debug(f"Waiting {wait_time} seconds on {category.lower()} page...")
                 sleep(wait_time)
 
@@ -481,7 +479,7 @@ class SearchController:
 
         # go back to the original window
         self._driver.switch_to.window(original_window_handle)
-        sleep(get_random_sleep(1, 1.5) * self.config.behavior.wait_factor)
+        sleep(get_random_sleep(1, 1.5) * config.behavior.wait_factor)
 
     def _open_link_in_new_tab(
         self, link_element: selenium.webdriver.remote.webelement.WebElement
@@ -503,7 +501,7 @@ class SearchController:
             actions.key_up(control_command_key)
             actions.perform()
 
-            sleep(get_random_sleep(0.5, 1) * self.config.behavior.wait_factor)
+            sleep(get_random_sleep(0.5, 1) * config.behavior.wait_factor)
 
         except JavascriptException as exp:
             error_message = str(exp).split("\n")[0]
@@ -570,7 +568,7 @@ class SearchController:
     def _load(self) -> None:
         """Load Google main page"""
 
-        if self.config.webdriver.use_seleniumbase:
+        if config.webdriver.use_seleniumbase:
             self._driver.uc_open_with_reconnect(self.URL, reconnect_time=3)
         else:
             self._driver.get(self.URL)
@@ -721,7 +719,7 @@ class SearchController:
                     break
 
             self._driver.find_element(By.TAG_NAME, "body").send_keys(Keys.PAGE_DOWN)
-            sleep(get_random_sleep(2, 2.5) * self.config.behavior.wait_factor)
+            sleep(get_random_sleep(2, 2.5) * config.behavior.wait_factor)
 
             scroll_count += 1
 
@@ -875,7 +873,7 @@ class SearchController:
             
             logger.info("Successfully clicked the 'Accept all' cookie button via JavaScript.")
             # Wait a moment for the dialog to disappear
-            sleep(get_random_sleep(2.0, 3.0) * self.config.behavior.wait_factor)
+            sleep(get_random_sleep(2.0, 3.0) * config.behavior.wait_factor)
 
         except TimeoutException:
             logger.debug("Cookie consent button not found. Continuing...")
@@ -946,7 +944,7 @@ class SearchController:
             elif direction == Direction.UP:
                 self._driver.find_element(By.TAG_NAME, "body").send_keys(Keys.PAGE_UP)
 
-            sleep(get_random_sleep(1, 3) * self.config.behavior.wait_factor)
+            sleep(get_random_sleep(1, 3) * config.behavior.wait_factor)
 
         self._driver.find_element(By.TAG_NAME, "body").send_keys(Keys.HOME)
 
@@ -969,7 +967,7 @@ class SearchController:
             elif direction == Direction.UP:
                 self._send_swipe(direction=Direction.UP)
 
-            sleep(get_random_sleep(1, 2) * self.config.behavior.wait_factor)
+            sleep(get_random_sleep(1, 2) * config.behavior.wait_factor)
 
         HOME_KEYCODE = 122
         adb_controller.send_keyevent(HOME_KEYCODE)  # go to top by sending Home key
@@ -1072,7 +1070,7 @@ class SearchController:
     def _check_captcha(self) -> None:
         """Check if captcha exists and solve it if 2captcha is used, otherwise exit"""
 
-        sleep(get_random_sleep(2, 2.5) * self.config.behavior.wait_factor)
+        sleep(get_random_sleep(2, 2.5) * config.behavior.wait_factor)
 
         try:
             captcha = self._driver.find_element(*self.RECAPTCHA)
@@ -1119,7 +1117,7 @@ class SearchController:
                     )
                     self._driver.get(captcha_redirect_url)
 
-                    sleep(get_random_sleep(2, 2.5) * self.config.behavior.wait_factor)
+                    sleep(get_random_sleep(2, 2.5) * config.behavior.wait_factor)
 
                 else:
                     logger.info("Please try with a different proxy.")
@@ -1141,18 +1139,18 @@ class SearchController:
             logger.debug("Closing location choose dialog...")
             estimated_loc_img.click()
 
-            sleep(get_random_sleep(1, 1.5) * self.config.behavior.wait_factor)
+            sleep(get_random_sleep(1, 1.5) * config.behavior.wait_factor)
 
             continue_button = self._driver.find_element(*self.LOC_CONTINUE_BUTTON)
             logger.debug(continue_button.get_attribute("outerHTML"))
 
             continue_button.click()
 
-            sleep(get_random_sleep(0.1, 0.5) * self.config.behavior.wait_factor)
+            sleep(get_random_sleep(0.1, 0.5) * config.behavior.wait_factor)
 
         except NoSuchElementException:
 
-            sleep(get_random_sleep(1, 1.5) * self.config.behavior.wait_factor)
+            sleep(get_random_sleep(1, 1.5) * config.behavior.wait_factor)
 
             try:
                 logger.debug("Checking alternative location dialog...")
@@ -1163,7 +1161,7 @@ class SearchController:
 
                 not_now_button.click()
 
-                sleep(get_random_sleep(0.2, 0.5) * self.config.behavior.wait_factor)
+                sleep(get_random_sleep(0.2, 0.5) * config.behavior.wait_factor)
 
             except NoSuchElementException:
                 logger.debug("No location choose dialog seen. Continue to search...")
@@ -1191,7 +1189,7 @@ class SearchController:
 
             for character in text:
                 element.send_keys(character)
-                sleep(get_random_sleep(0.05, 0.15) * self.config.behavior.wait_factor)
+                sleep(get_random_sleep(0.05, 0.15) * config.behavior.wait_factor)
 
             element.send_keys(Keys.ENTER)
 

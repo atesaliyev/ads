@@ -24,7 +24,7 @@ except ImportError:
     import undetected_chromedriver
     from openpyxl.styles import Alignment, Font
 
-from config_reader import ConfigReader
+from config_reader import config
 from geolocation_db import GeolocationDB
 from logger import logger
 from proxy import get_proxies
@@ -300,7 +300,6 @@ def get_domains() -> list[str]:
     :returns: List of domains
     """
 
-    config = ConfigReader()
     filepath = Path(config.general.domains)
 
     if not filepath.exists():
