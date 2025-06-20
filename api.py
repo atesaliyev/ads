@@ -202,11 +202,11 @@ def get_docker_logs_simple():
     """
     Get recent Docker logs without streaming (for simple viewing).
     Query parameters:
-    - lines: Number of lines to fetch (default: 100)
+    - lines: Number of lines to fetch (default: 10)
     - tail: Use tail instead of full logs (default: true)
     """
     try:
-        lines = request.args.get('lines', '100')
+        lines = request.args.get('lines', '10')
         use_tail = request.args.get('tail', 'true').lower() == 'true'
         
         if use_tail:
