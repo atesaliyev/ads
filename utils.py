@@ -24,7 +24,7 @@ except ImportError:
     import undetected_chromedriver
     from openpyxl.styles import Alignment, Font
 
-from config_reader import config
+from config_reader import ConfigReader
 from geolocation_db import GeolocationDB
 from logger import logger
 from proxy import get_proxies
@@ -276,6 +276,7 @@ def get_queries() -> list[str]:
     :returns: List of queries
     """
 
+    config = ConfigReader()
     queries = []
     filepath = Path(config.general.query_file)
 
@@ -299,6 +300,7 @@ def get_domains() -> list[str]:
     :returns: List of domains
     """
 
+    config = ConfigReader()
     filepath = Path(config.general.domains)
 
     if not filepath.exists():
@@ -450,6 +452,7 @@ def take_screenshot(driver: undetected_chromedriver.Chrome) -> None:
     :param driver: Selenium Chrome webdriver instance
     """
 
+    config = ConfigReader()
     now = datetime.now().strftime("%d-%m-%Y_%H:%M:%S")
     filename = f"exception_ss_{now}.png"
 

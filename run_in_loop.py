@@ -4,10 +4,10 @@ from time import sleep
 from datetime import datetime
 
 from logger import logger
-from config_reader import config
+from config_reader import ConfigReader
 
 
-def _inside_running_interval() -> bool:
+def _inside_running_interval(config) -> bool:
     """Check if the current time is in the running interval
 
     :rtype: bool
@@ -38,12 +38,13 @@ def _inside_running_interval() -> bool:
 
 
 def main() -> None:
+    config = ConfigReader()
 
     command = ["python", "run_ad_clicker.py"]
 
     while True:
 
-        if not _inside_running_interval():
+        if not _inside_running_interval(config):
             start_time = config.behavior.running_interval_start
             logger.info(f"Outside of the running interval. Waiting {start_time} to start...")
             sleep(60)
