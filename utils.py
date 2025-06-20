@@ -45,7 +45,8 @@ def get_random_user_agent_string() -> str:
     :returns: User agent string
     """
 
-    user_agents = _get_user_agents(config.paths.user_agents)
+    # The user_agents file path is now hardcoded as it's a core part of the project.
+    user_agents = _get_user_agents(Path("user_agents.txt"))
 
     user_agent_string = random.choice(user_agents)
 
@@ -275,10 +276,12 @@ def get_queries() -> list[str]:
     :returns: List of queries
     """
 
-    filepath = Path(config.paths.query_file)
+    queries = []
+    filepath = Path(config.general.query_file)
 
     if not filepath.exists():
-        raise SystemExit(f"Couldn't find queries file: {filepath}")
+        logger.error(f"Couldn't find queries file: {filepath}")
+        raise SystemExit()
 
     with open(filepath, encoding="utf-8") as queryfile:
         queries = [
@@ -290,13 +293,13 @@ def get_queries() -> list[str]:
 
 
 def get_domains() -> list[str]:
-    """Get domains from file
+    """Get domains to filter from file
 
     :rtype: list
     :returns: List of domains
     """
 
-    filepath = Path(config.paths.filtered_domains)
+    filepath = Path(config.general.domains)
 
     if not filepath.exists():
         raise SystemExit(f"Couldn't find domains file: {filepath}")
@@ -666,7 +669,7 @@ def boost_requests(url: str) -> None:
     logger.debug(f"Sending 10 requests to [{url}]...")
 
     proxies = get_proxies()
-    user_agents = _get_user_agents(config.paths.user_agents)
+    user_agents = _get_user_agents(Path("user_agents.txt"))
 
     random.shuffle(proxies)
     random.shuffle(user_agents)
