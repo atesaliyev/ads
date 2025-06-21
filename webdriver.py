@@ -248,6 +248,7 @@ def create_webdriver(
             options=chrome_options,
             user_multi_procs=multi_procs_enabled,
             use_subprocess=False,
+            headless=False,
         )
 
         accuracy = 95
@@ -286,12 +287,10 @@ def create_webdriver(
 
     else:
         driver = CustomChrome(
-            driver_executable_path=(
-                driver_exe_path if multi_procs_enabled and Path(driver_exe_path).exists() else None
-            ),
             options=chrome_options,
             user_multi_procs=multi_procs_enabled,
             use_subprocess=False,
+            headless=False,
         )
 
     # driver.maximize_window() is commented out to prevent errors
