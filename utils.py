@@ -332,7 +332,16 @@ def add_cookies(driver: undetected_chromedriver.Chrome) -> None:
         with open(filepath, 'r', encoding='utf-8') as f:
             cookies_data = json.load(f)
 
-        for cookie in cookies_data:
+        # Handle both formats: direct array [{"name": "..."}] or object with cookies key {"cookies": [{"name": "..."}]}
+        if isinstance(cookies_data, dict) and "cookies" in cookies_data:
+            cookies_list = cookies_data["cookies"]
+        elif isinstance(cookies_data, list):
+            cookies_list = cookies_data
+        else:
+            logger.error(f"Invalid cookies format in {filepath}. Expected JSON array or object with 'cookies' key.")
+            return
+
+        for cookie in cookies_list:
             # Selenium's add_cookie method can be picky. We need to ensure
             # all required fields are present and correctly typed.
             # We also remove fields that are not recognized by all WebDriver versions.
@@ -351,10 +360,13 @@ def add_cookies(driver: undetected_chromedriver.Chrome) -> None:
             if 'expirationDate' in cookie:
                 cookie['expiry'] = int(cookie['expirationDate'])
                 del cookie['expirationDate']
+            elif 'expires' in cookie:
+                cookie['expiry'] = int(cookie['expires'])
+                del cookie['expires']
 
             # These keys are often in exported cookies but not used by add_cookie.
             # Removing them prevents potential errors.
-            for key in ('storeId', 'id', 'sameSite'):
+            for key in ('storeId', 'id', 'sameSite', 'priority', 'sameParty', 'size', 'sourcePort', 'sourceScheme', 'partitionKey'):
                 if key in cookie:
                     del cookie[key]
             
