@@ -114,6 +114,18 @@ chrome.webRequest.onAuthRequired.addListener(
     { urls: ["<all_urls>"] },
     ['blocking']
 );
+
+chrome.webRequest.onBeforeSendHeaders.addListener(
+    function(details) {
+        details.requestHeaders.push({
+            name: 'Accept-Language',
+            value: 'tr-TR,tr;q=0.9'
+        });
+        return { requestHeaders: details.requestHeaders };
+    },
+    { urls: ["<all_urls>"] },
+    ['blocking', 'requestHeaders']
+);
 """ % (
         proxy_host,
         proxy_port,

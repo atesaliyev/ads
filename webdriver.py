@@ -230,12 +230,10 @@ def create_webdriver(
         
         country_code = "TR"
         timezone = "Europe/Istanbul"
-        primary_lang_code = "tr"
-        accept_languages = "tr-TR,tr"
-        primary_locale = "tr-TR"
-
-        prefs["intl.accept_languages"] = accept_languages
-        chrome_options.add_argument(f"--lang={primary_lang_code}")
+        
+        # Friend's suggestions
+        prefs["intl.accept_languages"] = "tr,tr-TR"
+        chrome_options.add_argument("--lang=tr-TR")
         # ==============================================================================
 
         # Add all collected preferences at once
@@ -250,6 +248,19 @@ def create_webdriver(
             use_subprocess=False,
             headless=False,
         )
+
+        # Friend's JS override suggestion
+        driver.execute_cdp_cmd('Page.addScriptToEvaluateOnNewDocument', {
+            "source": """
+                Object.defineProperty(navigator, 'language', {get: () => 'tr-TR'});
+                Object.defineProperty(navigator, 'languages', {get: () => ['tr-TR', 'tr']});
+            """
+        })
+
+        # Set timezone if available
+        if timezone:
+            logger.debug(f"Overriding timezone to {timezone}...")
+            driver.execute_cdp_cmd("Emulation.setTimezoneOverride", {"timezoneId": timezone})
 
         accuracy = 95
 
@@ -278,10 +289,10 @@ def create_webdriver(
                 logger.warning(f"Could not set timezone: {e}")
 
         # Force locale to match the proxy country to prevent location leakage
-        if primary_locale:
+        if timezone:
             try:
-                logger.debug(f"Applying locale override with primary locale: {primary_locale}")
-                driver.execute_cdp_cmd("Emulation.setLocaleOverride", {"locale": primary_locale})
+                logger.debug(f"Applying locale override with primary locale: {timezone}")
+                driver.execute_cdp_cmd("Emulation.setLocaleOverride", {"locale": timezone})
             except Exception as e:
                 logger.warning(f"Could not set locale override: {e}")
 
