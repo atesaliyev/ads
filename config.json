@@ -7,7 +7,7 @@
   },
   "general": {
     "queries": [],
-    "multi_browser_in_use": false,
+    "multi_browser_in_use": true,
     "run_on_startup": true
   },
   "behavior": {
@@ -22,7 +22,7 @@
     "nonad_page_min_wait": 5,
     "nonad_page_max_wait": 10,
     "random_mouse": true,
-    "custom_cookies": false,
+    "custom_cookies": true,
     "delete_cookies": false,
     "hooks_enabled": true,
     "twocaptcha_apikey": "30f0a811e4b8cff2b639995cfa4fc489",
