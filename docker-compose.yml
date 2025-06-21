@@ -20,7 +20,6 @@ services:
       - ./proxies.txt:/src/proxies.txt
       - ./domains.txt:/src/domains.txt
       - ./sample_queries.txt:/src/sample_queries.txt
-      - ./clicklogs_db.py:/src/clicklogs_db.py
       - ./logs:/src/logs
       
     # Restart Policy
