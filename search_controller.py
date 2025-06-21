@@ -164,7 +164,7 @@ class SearchController:
         
         # URL encoding the parameters
         query_string = "&".join([f"{key}={value}" for key, value in params.items()])
-        search_url = f"https://www.google.com/search?{query_string}"
+        search_url = f"https://www.google.com.tr/search?{query_string}"
 
         logger.info(f"Navigating to forced geolocation URL: {search_url}")
         
