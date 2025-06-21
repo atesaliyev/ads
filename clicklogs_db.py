@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Optional
 from contextlib import contextmanager
+from pathlib import Path
 
 import sqlite3
 
@@ -166,8 +167,12 @@ class ClickLogsDB:
         :returns: Database connection cursor
         """
 
+        # Ensure the logs directory exists
+        db_path = Path("logs") / "clicklogs.db"
+        db_path.parent.mkdir(exist_ok=True)
+
         try:
-            clicklogs_db = sqlite3.connect("clicklogs.db")
+            clicklogs_db = sqlite3.connect(db_path)
             yield clicklogs_db.cursor()
 
         except sqlite3.Error as exp:
