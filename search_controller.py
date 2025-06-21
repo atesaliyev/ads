@@ -147,7 +147,7 @@ class SearchController:
 
         self._clicklogs_db_client = ClickLogsDB()
 
-        self._load()
+        # self._load() # Defer loading to search_for_ads to handle cookies correctly
 
     def _load(self) -> None:
         """Load Google search page with geolocation parameters."""
@@ -187,13 +187,21 @@ class SearchController:
         """
 
         if self._use_custom_cookies:
+            # Navigate to a base domain first to be able to set cookies for .google.com
+            logger.info("Navigating to base domain to set cookies...")
+            base_url = "https://www.google.com.tr"
+            if config.webdriver.use_seleniumbase:
+                self._driver.uc_open_with_reconnect(base_url, reconnect_time=3)
+            else:
+                self._driver.get(base_url)
+            
             self._driver.delete_all_cookies()
             add_cookies(self._driver)
+            # Cookies are now set for the base domain.
 
-            # After adding cookies, we must reload the page for them to take effect
-            # on the initial request.
-            logger.debug("Re-navigating to the search URL for cookies to take effect.")
-            self._load()
+        # Now, load the actual search page with all parameters.
+        # Cookies will be sent with this request.
+        self._load()
 
         self._check_captcha()
         self._close_cookie_dialog()
