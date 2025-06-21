@@ -21,6 +21,7 @@ from utils import (
     take_screenshot,
     generate_click_report,
     get_random_sleep,
+    add_cookies,
 )
 from webdriver import create_webdriver
 
