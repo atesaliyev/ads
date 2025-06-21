@@ -289,10 +289,11 @@ def create_webdriver(
                 logger.warning(f"Could not set timezone: {e}")
 
         # Force locale to match the proxy country to prevent location leakage
-        if timezone:
+        if country_code == "TR":
             try:
-                logger.debug(f"Applying locale override with primary locale: {timezone}")
-                driver.execute_cdp_cmd("Emulation.setLocaleOverride", {"locale": timezone})
+                locale_override = "tr-TR"
+                logger.debug(f"Applying locale override with: {locale_override}")
+                driver.execute_cdp_cmd("Emulation.setLocaleOverride", {"locale": locale_override})
             except Exception as e:
                 logger.warning(f"Could not set locale override: {e}")
 
