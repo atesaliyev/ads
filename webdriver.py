@@ -266,6 +266,16 @@ def create_webdriver(
             except Exception as e:
                 logger.warning(f"Could not set timezone: {e}")
 
+        # Force locale to match the proxy country to prevent location leakage
+        if country_code and config.webdriver.language_from_proxy:
+            locale = get_locale_language(country_code)
+            if locale:
+                try:
+                    logger.debug(f"Applying locale override: {locale}")
+                    driver.execute_cdp_cmd("Emulation.setLocaleOverride", {"locale": locale})
+                except Exception as e:
+                    logger.warning(f"Could not set locale override: {e}")
+
     else:
         driver = CustomChrome(
             driver_executable_path=(
