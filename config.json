@@ -27,7 +27,7 @@
     "hooks_enabled": true,
     "twocaptcha_apikey": "30f0a811e4b8cff2b639995cfa4fc489",
     "telegram_enabled": false,
-    "max_scroll_limit": 5,
+    "max_scroll_limit": 15,
     "excludes": "",
     "check_shopping_ads": false,
     "click_order": 5,

@@ -180,18 +180,18 @@ def create_webdriver(
     ]
     chrome_options.add_argument(f"--disable-features={','.join(optimization_features)}")
 
-    # disable WebRTC IP tracking
-    webrtc_preferences = {
-        "webrtc.ip_handling_policy": "disable_non_proxied_udp",
-        "webrtc.multiple_routes_enabled": False,
-        "webrtc.nonproxied_udp_enabled": False,
-    }
-    chrome_options.add_experimental_option("prefs", webrtc_preferences)
-
     if config.webdriver.incognito:
         chrome_options.add_argument("--incognito")
 
     country_code = None
+
+    # Create a dictionary to hold all preferences
+    prefs = {
+        # WebRTC settings to prevent IP leak
+        "webrtc.ip_handling_policy": "disable_non_proxied_udp",
+        "webrtc.multiple_routes_enabled": False,
+        "webrtc.nonproxied_udp_enabled": False,
+    }
 
     multi_browser_flag_file = Path(".MULTI_BROWSERS_IN_USE")
     multi_procs_enabled = multi_browser_flag_file.exists()
@@ -202,6 +202,9 @@ def create_webdriver(
 
     if proxy:
         logger.info(f"Using proxy: {proxy}")
+
+        # Force DNS to go through proxy as well, to prevent DNS leaks
+        prefs["net.proxy.proxy_dns"] = True
 
         if config.webdriver.auth:
             if "@" not in proxy or proxy.count(":") != 2:
@@ -226,10 +229,19 @@ def create_webdriver(
             timezone = "Europe/Istanbul"
             logger.debug("Proxy is in Turkey, forcefully setting timezone to Europe/Istanbul")
 
-        if config.webdriver.language_from_proxy:
-            lang = get_locale_language(country_code)
-            chrome_options.add_experimental_option("prefs", {"intl.accept_languages": str(lang)})
-            chrome_options.add_argument(f"--lang={lang[:2]}")
+        if config.webdriver.language_from_proxy and country_code:
+            lang_list = get_locale_language(country_code)
+            if lang_list:
+                lang_string = lang_list[0]
+                primary_lang_code = lang_string.split(',')[0].split('-')[0]
+                accept_languages = lang_string.split(';')[0]
+
+                prefs["intl.accept_languages"] = accept_languages
+                chrome_options.add_argument(f"--lang={primary_lang_code}")
+                logger.debug(f"Set language prefs to '{accept_languages}' and lang argument to '{primary_lang_code}'")
+
+        # Add all collected preferences at once
+        chrome_options.add_experimental_option("prefs", prefs)
 
         driver = CustomChrome(
             driver_executable_path=(
