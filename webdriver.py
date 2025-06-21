@@ -268,11 +268,15 @@ def create_webdriver(
 
         # Force locale to match the proxy country to prevent location leakage
         if country_code and config.webdriver.language_from_proxy:
-            locale = get_locale_language(country_code)
-            if locale:
+            locale_string = get_locale_language(country_code)
+            if locale_string:
+                # The setLocaleOverride command expects a single locale (e.g., "tr-TR"),
+                # but our function returns a complex string (e.g., "tr-TR,tr;q=0.9").
+                # We extract only the primary locale part.
+                primary_locale = locale_string.split(',')[0]
                 try:
-                    logger.debug(f"Applying locale override: {locale}")
-                    driver.execute_cdp_cmd("Emulation.setLocaleOverride", {"locale": locale})
+                    logger.debug(f"Applying locale override with primary locale: {primary_locale}")
+                    driver.execute_cdp_cmd("Emulation.setLocaleOverride", {"locale": primary_locale})
                 except Exception as e:
                     logger.warning(f"Could not set locale override: {e}")
 
