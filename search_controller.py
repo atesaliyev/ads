@@ -188,8 +188,9 @@ class SearchController:
 
         if self._use_custom_cookies:
             # Navigate to a base domain first to be able to set cookies for .google.com
-            logger.info("Navigating to base domain to set cookies...")
-            base_url = "https://www.google.com.tr"
+            # Use /ncr (No Country Redirect) to prevent Google from redirecting to .com
+            logger.info("Navigating to base domain with NCR to set cookies...")
+            base_url = "https://www.google.com.tr/ncr"
             if config.webdriver.use_seleniumbase:
                 self._driver.uc_open_with_reconnect(base_url, reconnect_time=3)
             else:

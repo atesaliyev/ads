@@ -336,6 +336,16 @@ def add_cookies(driver: undetected_chromedriver.Chrome) -> None:
             # Selenium's add_cookie method can be picky. We need to ensure
             # all required fields are present and correctly typed.
             # We also remove fields that are not recognized by all WebDriver versions.
+
+            # USER'S SUGGESTION: Force cookie domain to .google.com.tr
+            # This is the best way to solve the 'domain mismatch' error.
+            original_domain = cookie.get("domain", "")
+            if "google.com" in original_domain:
+                cookie["domain"] = ".google.com.tr"
+                # If a cookie was host-only (e.g., for www.google.com),
+                # it must be changed to not be host-only for the new parent domain.
+                if "hostOnly" in cookie:
+                    cookie["hostOnly"] = False
             
             # The 'expiry' key is used by some WebDriver versions instead of 'expirationDate'.
             if 'expirationDate' in cookie:
