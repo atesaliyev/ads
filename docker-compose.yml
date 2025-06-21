@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  ad-clicker:
+    build: .
+    container_name: ad-clicker-container
+    
+    # Port Mappings
+    # 5000: API for running the script
+    # 6901: noVNC web interface to view the browser
+    ports:
+      - "5000:5000"
+      - "6901:6901"
+      
+    # Volume Mappings
+    # This ensures that your config, database, and logs are not lost
+    # when the container is recreated.
+    volumes:
+      - ./config.json:/src/config.json
+      - ./proxies.txt:/src/proxies.txt
+      - ./domains.txt:/src/domains.txt
+      - ./sample_queries.txt:/src/sample_queries.txt
+      - ./clicklogs_db.py:/src/clicklogs_db.py
+      - ./logs:/src/logs
+      
+    # Restart Policy
+    # Automatically restarts the container unless it is stopped manually.
+    restart: unless-stopped 
