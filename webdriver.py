@@ -224,21 +224,19 @@ def create_webdriver(
         # get location of the proxy IP
         lat, long, country_code, timezone = get_location(geolocation_db_client, proxy)
 
-        # Force timezone for Turkey to ensure correct ad region
-        if country_code == "TR":
-            timezone = "Europe/Istanbul"
-            logger.debug("Proxy is in Turkey, forcefully setting timezone to Europe/Istanbul")
+        # ================== NUCLEAR OPTION: HARDCODE TURKISH SETTINGS ==================
+        # Forcing all settings to Turkish to isolate the problem.
+        logger.debug("NUCLEAR OPTION ENGAGED: Forcing all settings to TR.")
+        
+        country_code = "TR"
+        timezone = "Europe/Istanbul"
+        primary_lang_code = "tr"
+        accept_languages = "tr-TR,tr"
+        primary_locale = "tr-TR"
 
-        if config.webdriver.language_from_proxy and country_code:
-            lang_list = get_locale_language(country_code)
-            if lang_list:
-                lang_string = lang_list[0]
-                primary_lang_code = lang_string.split(',')[0].split('-')[0]
-                accept_languages = lang_string.split(';')[0]
-
-                prefs["intl.accept_languages"] = accept_languages
-                chrome_options.add_argument(f"--lang={primary_lang_code}")
-                logger.debug(f"Set language prefs to '{accept_languages}' and lang argument to '{primary_lang_code}'")
+        prefs["intl.accept_languages"] = accept_languages
+        chrome_options.add_argument(f"--lang={primary_lang_code}")
+        # ==============================================================================
 
         # Add all collected preferences at once
         chrome_options.add_experimental_option("prefs", prefs)
@@ -279,19 +277,12 @@ def create_webdriver(
                 logger.warning(f"Could not set timezone: {e}")
 
         # Force locale to match the proxy country to prevent location leakage
-        if country_code and config.webdriver.language_from_proxy:
-            locale_list = get_locale_language(country_code)
-            if locale_list:
-                # The setLocaleOverride command expects a single locale (e.g., "tr-TR").
-                # Our function returns a list containing a complex string (e.g., ['tr-TR,tr;q=0.9']).
-                # We extract the string from the list, then the primary locale part.
-                locale_string = locale_list[0]
-                primary_locale = locale_string.split(',')[0]
-                try:
-                    logger.debug(f"Applying locale override with primary locale: {primary_locale}")
-                    driver.execute_cdp_cmd("Emulation.setLocaleOverride", {"locale": primary_locale})
-                except Exception as e:
-                    logger.warning(f"Could not set locale override: {e}")
+        if primary_locale:
+            try:
+                logger.debug(f"Applying locale override with primary locale: {primary_locale}")
+                driver.execute_cdp_cmd("Emulation.setLocaleOverride", {"locale": primary_locale})
+            except Exception as e:
+                logger.warning(f"Could not set locale override: {e}")
 
     else:
         driver = CustomChrome(
