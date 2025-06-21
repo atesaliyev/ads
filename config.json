@@ -12,7 +12,7 @@
   },
   "behavior": {
     "ad_click_probability": 0.8,
-    "max_ad_clicks_per_query": 2,
+    "max_ad_clicks_per_query": 4,
     "max_non_ad_clicks_per_query": 1,
     "max_shopping_ad_clicks_per_query": 1,
     "max_total_clicks_per_query": 4,
