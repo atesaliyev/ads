@@ -51,10 +51,13 @@ RUN echo '#!/bin/bash' > /src/start.sh && \
     echo 'export DISPLAY=:1' >> /src/start.sh && \
     echo 'Xvfb $DISPLAY -screen 0 1920x1080x24+32 &' >> /src/start.sh && \
     echo 'fluxbox &' >> /src/start.sh && \
-    echo 'x11vnc -display $DISPLAY -forever -nopw -create &' >> /src/start.sh && \
-    echo 'websockify -D --web /usr/share/novnc/ 6901 localhost:5900 &' >> /src/start.sh && \
-    echo '# Wait for a moment for services to start' >> /src/start.sh && \
+    echo '# Wait for a moment for the graphical environment to settle' >> /src/start.sh && \
     echo 'sleep 2' >> /src/start.sh && \
+    echo 'x11vnc -display $DISPLAY -forever -nopw -create &' >> /src/start.sh && \
+    echo '# Wait for x11vnc to start' >> /src/start.sh && \
+    echo 'sleep 2' >> /src/start.sh && \
+    echo 'websockify -D --web /usr/share/novnc/ 6901 localhost:5900 &' >> /src/start.sh && \
+    echo '# All services launched, now starting the main application' >> /src/start.sh && \
     echo 'exec python api.py' >> /src/start.sh && \
     chmod +x /src/start.sh
 
