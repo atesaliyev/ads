@@ -89,7 +89,7 @@ class SearchController:
     :param user_agent: User agent used for the search
     """
 
-    URL = "https://www.google.com"
+    URL = "https://www.google.com.tr"
 
     SEARCH_INPUT = (By.NAME, "q")
     RESULTS_CONTAINER = (By.ID, "appbar")
@@ -142,7 +142,8 @@ class SearchController:
             logger.debug(f"Words to be excluded: {self._exclude_list}")
 
         if country_code:
-            self._set_start_url(country_code)
+            # self._set_start_url(country_code)  # Temporarily disable dynamic URL setting
+            pass
 
         self._clicklogs_db_client = ClickLogsDB()
 
@@ -912,22 +913,26 @@ class SearchController:
                 logger.debug("Incognito mode is active. No need to delete cache. Skipping...")
 
     def _set_start_url(self, country_code: str) -> None:
-        """Set start url according to country code of the proxy IP
-
-        :type country_code: str
-        :param country_code: Country code for the proxy IP
-        """
-
-        with open("domain_mapping.json", "r") as domains_file:
-            domains = json.load(domains_file)
-
-        country_domain = domains.get(country_code, "www.google.com")
-        self.URL = f"https://{country_domain}"
-
-        logger.debug(f"Start url was set to {self.URL}")
+        """Set start URL based on the country code of the proxy IP"""
+        # This method is temporarily disabled to force .com.tr
+        return
+        # The logic below is preserved in case we need it later.
+        
+        # if config.webdriver.country_domain:
+        #     # get TLD for country code
+        #     try:
+        #         import pycountry
+        #
+        #         country = pycountry.countries.get(alpha_2=country_code)
+        #         tld = country.alpha_2.lower()
+        #         self.URL = f"https://www.google.{tld}"
+        #
+        #     except (ImportError, AttributeError):
+        #         logger.debug(f"Couldn't get TLD for {country_code}")
+        #         logger.debug("Will use default google.com")
 
     def _make_random_scrolls(self) -> None:
-        """Make random scrolls on page"""
+        """Make random scrolls in the page"""
 
         logger.debug("Making random scrolls...")
 
