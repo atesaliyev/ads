@@ -149,6 +149,30 @@ class SearchController:
 
         self._load()
 
+    def _load(self) -> None:
+        """Load Google search page with geolocation parameters."""
+        # Parameters to force Turkish results
+        # gl=TR: Geolocation to Turkey
+        # hl=tr: Host Language to Turkish
+        # cr=countryTR: Country Restrict to Turkey
+        params = {
+            "q": self._search_query,
+            "gl": "TR",
+            "hl": "tr",
+            "cr": "countryTR"
+        }
+        
+        # URL encoding the parameters
+        query_string = "&".join([f"{key}={value}" for key, value in params.items()])
+        search_url = f"https://www.google.com/search?{query_string}"
+
+        logger.info(f"Navigating to forced geolocation URL: {search_url}")
+        
+        if config.webdriver.use_seleniumbase:
+            self._driver.uc_open_with_reconnect(search_url, reconnect_time=3)
+        else:
+            self._driver.get(search_url)
+
     def search_for_ads(
         self, non_ad_domains: Optional[list[str]] = None
     ) -> tuple[AdList, NonAdList]:
@@ -166,45 +190,19 @@ class SearchController:
             self._driver.delete_all_cookies()
             add_cookies(self._driver)
 
-            for cookie in self._driver.get_cookies():
-                logger.debug(cookie)
+            # After adding cookies, we must reload the page for them to take effect
+            # on the initial request.
+            logger.debug("Re-navigating to the search URL for cookies to take effect.")
+            self._load()
 
         self._check_captcha()
         self._close_cookie_dialog()
 
-        logger.info(f"Starting search for '{self._search_query}'")
-        sleep(get_random_sleep(1, 2) * config.behavior.wait_factor)
-
-        try:
-            search_input_box = self._driver.find_element(*self.SEARCH_INPUT)
-            self._type_humanlike(search_input_box, self._search_query)
-
-        except ElementNotInteractableException:
-            self._check_captcha()
-            self._close_cookie_dialog()
-
-            try:
-                logger.debug("Waiting for search box to be ready...")
-
-                wait = WebDriverWait(self._driver, timeout=7)
-                searchbox_ready = wait.until(EC.element_to_be_clickable(self.SEARCH_INPUT))
-
-                if searchbox_ready:
-                    logger.debug("Search box is ready...")
-
-                    try:
-                        search_input_box = self._driver.find_element(*self.SEARCH_INPUT)
-                        self._type_humanlike(search_input_box, self._search_query)
-                    except ElementNotInteractableException:
-                        pass
-
-            except TimeoutException:
-                logger.error("Timed out waiting for search box!")
-                self.end_search()
-
-                return (None, None, None)
-
-        self._check_captcha()
+        logger.info(f"Page loaded for search query: '{self._search_query}'")
+        
+        # Since we navigate directly to the search results, we no longer need to
+        # find the input box and type the query.
+        # The old logic for typing is removed.
 
         # wait 2 to 3 seconds before checking if results were loaded
         sleep(get_random_sleep(2, 3) * config.behavior.wait_factor)
@@ -565,14 +563,6 @@ class SearchController:
                 logger.debug(exp)
 
             self._driver = None
-
-    def _load(self) -> None:
-        """Load Google main page"""
-
-        if config.webdriver.use_seleniumbase:
-            self._driver.uc_open_with_reconnect(self.URL, reconnect_time=3)
-        else:
-            self._driver.get(self.URL)
 
     def _get_shopping_ad_links(self) -> AdList:
         """Extract shopping ad links to click if exists
