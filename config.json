@@ -11,8 +11,8 @@
     "run_on_startup": true
   },
   "behavior": {
-    "ad_click_probability": 1.0,
-    "max_ad_clicks_per_query": 10,
+    "ad_click_probability": 0.8,
+    "max_ad_clicks_per_query": 2,
     "max_non_ad_clicks_per_query": 1,
     "max_shopping_ad_clicks_per_query": 1,
     "max_total_clicks_per_query": 4,
@@ -41,7 +41,7 @@
     "incognito": true,
     "auth": true,
     "country_domain": true,
-    "language_from_proxy": false,
+    "language_from_proxy": true,
     "use_seleniumbase": false,
     "window_size": null,
     "shift_windows": false,
