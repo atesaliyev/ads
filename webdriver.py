@@ -285,7 +285,7 @@ def create_webdriver(
     sleep(1 * config.behavior.wait_factor)
     _shift_window_position(driver)
 
-    return driver, country_code
+    return driver, "TR"  # Always return "TR" as we forced the location
 
 def create_seleniumbase_driver(
     proxy: str, user_agent: Optional[str] = None
