@@ -268,11 +268,12 @@ def create_webdriver(
 
         # Force locale to match the proxy country to prevent location leakage
         if country_code and config.webdriver.language_from_proxy:
-            locale_string = get_locale_language(country_code)
-            if locale_string:
-                # The setLocaleOverride command expects a single locale (e.g., "tr-TR"),
-                # but our function returns a complex string (e.g., "tr-TR,tr;q=0.9").
-                # We extract only the primary locale part.
+            locale_list = get_locale_language(country_code)
+            if locale_list:
+                # The setLocaleOverride command expects a single locale (e.g., "tr-TR").
+                # Our function returns a list containing a complex string (e.g., ['tr-TR,tr;q=0.9']).
+                # We extract the string from the list, then the primary locale part.
+                locale_string = locale_list[0]
                 primary_locale = locale_string.split(',')[0]
                 try:
                     logger.debug(f"Applying locale override with primary locale: {primary_locale}")
