@@ -317,7 +317,8 @@ def add_cookies(driver: undetected_chromedriver.Chrome) -> None:
     """Add cookies from a JSON-formatted cookies.txt file.
 
     This function is designed to handle the standard format exported by
-    browser extensions like 'Get cookies.txt LOCALLY'.
+    browser extensions like 'Get cookies.txt LOCALLY'. This format is
+    a JSON array of cookie objects.
 
     :type driver: undetected_chromedriver.Chrome
     :param driver: Selenium Chrome webdriver instance
@@ -330,15 +331,10 @@ def add_cookies(driver: undetected_chromedriver.Chrome) -> None:
 
     try:
         with open(filepath, 'r', encoding='utf-8') as f:
-            cookies_data = json.load(f)
+            cookies_list = json.load(f)
 
-        # Handle both formats: direct array [{"name": "..."}] or object with cookies key {"cookies": [{"name": "..."}]}
-        if isinstance(cookies_data, dict) and "cookies" in cookies_data:
-            cookies_list = cookies_data["cookies"]
-        elif isinstance(cookies_data, list):
-            cookies_list = cookies_data
-        else:
-            logger.error(f"Invalid cookies format in {filepath}. Expected JSON array or object with 'cookies' key.")
+        if not isinstance(cookies_list, list):
+            logger.error(f"Invalid cookies format in {filepath}. Expected a JSON array.")
             return
 
         for cookie in cookies_list:
@@ -361,12 +357,13 @@ def add_cookies(driver: undetected_chromedriver.Chrome) -> None:
                 cookie['expiry'] = int(cookie['expirationDate'])
                 del cookie['expirationDate']
             elif 'expires' in cookie:
+                # Convert from seconds since epoch to integer expiry timestamp
                 cookie['expiry'] = int(cookie['expires'])
                 del cookie['expires']
 
             # These keys are often in exported cookies but not used by add_cookie.
             # Removing them prevents potential errors.
-            for key in ('storeId', 'id', 'sameSite', 'priority', 'sameParty', 'size', 'sourcePort', 'sourceScheme', 'partitionKey'):
+            for key in ('storeId', 'id', 'sameSite', 'priority', 'sameParty', 'size', 'sourcePort', 'sourceScheme', 'partitionKey', 'hostOnly'):
                 if key in cookie:
                     del cookie[key]
             
