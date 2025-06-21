@@ -9,6 +9,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libnss3 libxss1 libatk-bridge2.0-0 libgtk-3-0 \
     libdrm2 libxcomposite1 libxrandr2 libgbm1 libasound2 \
     fonts-liberation \
+    curl \
+    unzip \
+    xauth \
+    x11-utils \
   && rm -rf /var/lib/apt/lists/*
 
 # install google chrome
@@ -49,13 +53,11 @@ RUN python3 -c "from undetected_chromedriver.patcher import Patcher; p = Patcher
 # Create a startup script that launches all services
 RUN echo '#!/bin/bash' > /src/start.sh && \
     echo 'export DISPLAY=:1' >> /src/start.sh && \
-    echo 'Xvfb $DISPLAY -screen 0 1920x1080x24+32 &' >> /src/start.sh && \
+    echo 'Xvfb $DISPLAY -screen 0 1920x1080x24+32 -ac &' >> /src/start.sh && \
+    echo '# Wait for Xvfb to be ready by checking for the socket file' >> /src/start.sh && \
+    echo 'while [ ! -S /tmp/.X11-unix/X${DISPLAY:1} ]; do echo "Waiting for Xvfb socket..."; sleep 1; done' >> /src/start.sh && \
     echo 'fluxbox &' >> /src/start.sh && \
-    echo '# Wait for a moment for the graphical environment to settle' >> /src/start.sh && \
-    echo 'sleep 2' >> /src/start.sh && \
     echo 'x11vnc -display $DISPLAY -forever -nopw -create &' >> /src/start.sh && \
-    echo '# Wait for x11vnc to start' >> /src/start.sh && \
-    echo 'sleep 2' >> /src/start.sh && \
     echo 'websockify -D --web /usr/share/novnc/ 6901 localhost:5900 &' >> /src/start.sh && \
     echo '# All services launched, now starting the main application' >> /src/start.sh && \
     echo 'exec python api.py' >> /src/start.sh && \
