@@ -221,6 +221,11 @@ def create_webdriver(
         # get location of the proxy IP
         lat, long, country_code, timezone = get_location(geolocation_db_client, proxy)
 
+        # Force timezone for Turkey to ensure correct ad region
+        if country_code == "TR":
+            timezone = "Europe/Istanbul"
+            logger.debug("Proxy is in Turkey, forcefully setting timezone to Europe/Istanbul")
+
         if config.webdriver.language_from_proxy:
             lang = get_locale_language(country_code)
             chrome_options.add_experimental_option("prefs", {"intl.accept_languages": str(lang)})
@@ -237,24 +242,29 @@ def create_webdriver(
 
         accuracy = 95
 
-        # set geolocation and timezone of the browser according to IP address
+        # Set geolocation and timezone of the browser according to IP address
         if lat and long:
             driver.execute_cdp_cmd(
                 "Emulation.setGeolocationOverride",
                 {"latitude": lat, "longitude": long, "accuracy": accuracy},
             )
 
+            # If timezone was not found (and not TR), try to look it up
             if not timezone:
-                response = requests.get(f"http://timezonefinder.michelfe.it/api/0_{long}_{lat}")
+                try:
+                    response = requests.get(f"http://timezonefinder.michelfe.it/api/0_{long}_{lat}")
+                    if response.status_code == 200:
+                        timezone = response.json().get("timezone_id")
+                except Exception as e:
+                    logger.warning(f"Timezone API lookup failed: {e}")
 
-                if response.status_code == 200:
-                    timezone = response.json()["tz_name"]
-
-            driver.execute_cdp_cmd("Emulation.setTimezoneOverride", {"timezoneId": timezone})
-
-            logger.debug(
-                f"Timezone of {proxy.split('@')[1] if config.webdriver.auth else proxy}: {timezone}"
-            )
+        # If we have a timezone, apply it
+        if timezone:
+            try:
+                logger.debug(f"Applying timezone override: {timezone}")
+                driver.execute_cdp_cmd("Emulation.setTimezoneOverride", {"timezoneId": timezone})
+            except Exception as e:
+                logger.warning(f"Could not set timezone: {e}")
 
     else:
         driver = CustomChrome(
@@ -326,9 +336,14 @@ def create_seleniumbase_driver(
         if not timezone:
             response = requests.get(f"http://timezonefinder.michelfe.it/api/0_{long}_{lat}")
             if response.status_code == 200:
-                timezone = response.json()["tz_name"]
+                timezone = response.json()["timezone_id"]
 
-        driver.execute_cdp_cmd("Emulation.setTimezoneOverride", {"timezoneId": timezone})
+        if timezone:
+            try:
+                driver.execute_cdp_cmd("Emulation.setTimezoneOverride", {"timezoneId": timezone})
+            except Exception as e:
+                logger.warning(f"Could not set timezone: {e}")
+
         logger.debug(
             f"Timezone of {proxy.split('@')[1] if config.webdriver.auth else proxy}: {timezone}"
         )
