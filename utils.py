@@ -314,32 +314,55 @@ def get_domains() -> list[str]:
 
 
 def add_cookies(driver: undetected_chromedriver.Chrome) -> None:
-    """Add cookies from cookies.txt file
+    """Add cookies from a JSON-formatted cookies.txt file.
+
+    This function is designed to handle the standard format exported by
+    browser extensions like 'Get cookies.txt LOCALLY'.
 
     :type driver: undetected_chromedriver.Chrome
     :param driver: Selenium Chrome webdriver instance
     """
-
-    # This function seems to rely on a hardcoded "cookies.txt" file.
-    # The domain_mapping.json logic was incorrectly moved here.
-    # Reverting to the original logic of reading cookies.txt.
-    # If a different file is needed, it should be added to config.json paths.
-
     filepath = Path.cwd() / "cookies.txt"
-
     if not filepath.exists():
         raise SystemExit("Missing cookies.txt file!")
 
     logger.info(f"Adding cookies from {filepath}")
 
-    with open(filepath, encoding="utf-8") as cookiesfile:
-        cookies = [
-            cookie.strip().replace("'", "").replace('"', "")
-            for cookie in cookiesfile.read().splitlines()
-        ]
+    try:
+        with open(filepath, 'r', encoding='utf-8') as f:
+            cookies_data = json.load(f)
 
-    for cookie in cookies:
-        driver.add_cookie({"name": cookie.split("=")[0], "value": cookie.split("=")[1]})
+        for cookie in cookies_data:
+            # Selenium's add_cookie method can be picky. We need to ensure
+            # all required fields are present and correctly typed.
+            # We also remove fields that are not recognized by all WebDriver versions.
+            
+            # The 'expiry' key is used by some WebDriver versions instead of 'expirationDate'.
+            if 'expirationDate' in cookie:
+                cookie['expiry'] = int(cookie['expirationDate'])
+                del cookie['expirationDate']
+
+            # These keys are often in exported cookies but not used by add_cookie.
+            # Removing them prevents potential errors.
+            for key in ('storeId', 'id', 'sameSite'):
+                if key in cookie:
+                    del cookie[key]
+            
+            # Some fields must be present.
+            if 'domain' not in cookie or 'name' not in cookie or 'value' not in cookie:
+                logger.warning(f"Skipping malformed cookie: {cookie}")
+                continue
+
+            try:
+                driver.add_cookie(cookie)
+            except Exception as e:
+                logger.warning(f"Could not add cookie: {cookie['name']}. Reason: {e}")
+
+    except json.JSONDecodeError:
+        logger.error(f"Error decoding JSON from {filepath}. Please ensure it is a valid JSON file.")
+        # Optional: Add fallback for simple name=value format if needed, but for now, we enforce JSON.
+    except Exception as e:
+        logger.error(f"An unexpected error occurred while processing cookies: {e}")
 
 
 def solve_recaptcha(
