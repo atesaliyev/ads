@@ -163,10 +163,6 @@ def create_webdriver(
     chrome_options.add_argument("--dns-prefetch-disable")
     chrome_options.add_argument(f"--user-agent={user_agent}")
 
-    # Force language and region settings to Turkish
-    chrome_options.add_argument("--lang=tr")
-    chrome_options.add_experimental_option('prefs', {'intl.accept_languages': 'tr,tr_TR'})
-
     if IS_POSIX:
         chrome_options.add_argument("--disable-setuid-sandbox")
 
@@ -237,17 +233,6 @@ def create_webdriver(
             options=chrome_options,
             user_multi_procs=multi_procs_enabled,
             use_subprocess=False,
-        )
-
-        # Force geolocation to Istanbul, Turkey
-        location_params = {
-            "latitude": 41.0082,
-            "longitude": 28.9784,
-            "accuracy": 100,
-        }
-        driver.execute_cdp_cmd("Emulation.setGeolocationOverride", location_params)
-        driver.execute_cdp_cmd(
-            "Emulation.setTimezoneOverride", {"timezoneId": "Europe/Istanbul"}
         )
 
         accuracy = 95
@@ -328,17 +313,6 @@ def create_seleniumbase_driver(
         proxy_string=proxy or None,
         incognito=config.webdriver.incognito,
         locale_code=str(lang) if config.webdriver.language_from_proxy else None,
-    )
-
-    # Force geolocation to Istanbul, Turkey
-    location_params = {
-        "latitude": 41.0082,
-        "longitude": 28.9784,
-        "accuracy": 100,
-    }
-    driver.execute_cdp_cmd("Emulation.setGeolocationOverride", location_params)
-    driver.execute_cdp_cmd(
-        "Emulation.setTimezoneOverride", {"timezoneId": "Europe/Istanbul"}
     )
 
     # set geolocation and timezone if available
