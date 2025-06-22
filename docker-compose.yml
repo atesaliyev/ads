@@ -16,11 +16,7 @@ services:
     # This ensures that your config, database, and logs are not lost
     # when the container is recreated.
     volumes:
-      - ./config.json:/src/config.json
-      - ./proxies.txt:/src/proxies.txt
-      - ./domains.txt:/src/domains.txt
-      - ./sample_queries.txt:/src/sample_queries.txt
-      - ./logs:/src/logs
+      - .:/src
       
     # Restart Policy
     # Automatically restarts the container unless it is stopped manually.
