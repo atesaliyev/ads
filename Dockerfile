@@ -53,6 +53,12 @@ RUN echo '#!/bin/bash' > /start.sh && \
     echo 'x11vnc -display $DISPLAY -forever -nopw -create &' >> /start.sh && \
     echo 'websockify -D --web /usr/share/novnc/ 6901 localhost:5900 &' >> /start.sh && \
     echo '' >> /start.sh && \
+    echo '# === FINAL DIAGNOSTIC: Test proxy with curl before starting anything ===' >> /start.sh && \
+    echo 'echo "---- DIAGNOSTIC: Testing proxy connection with curl... ----"' >> /start.sh && \
+    echo 'curl --proxy dersdelisi2:cyOv4WS8RuTxg6rpn93U_country-TR@core-residential.evomi.com:1000 https://api.ipify.org' >> /start.sh && \
+    echo '' >> /start.sh && \
+    echo 'echo "---- DIAGNOSTIC: curl test finished. Starting services... ----"' >> /start.sh && \
+    echo '' >> /start.sh && \
     echo '# === DIAGNOSTIC STEP: Check Chrome Version ===' >> /start.sh && \
     echo 'echo "---- DIAGNOSTIC: Google Chrome Version ----"' >> /start.sh && \
     echo 'google-chrome --version' >> /start.sh && \
