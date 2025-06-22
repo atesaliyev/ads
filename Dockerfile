@@ -43,20 +43,23 @@ ENV PYTHONUNBUFFERED=1
 RUN python3 -c "from undetected_chromedriver.patcher import Patcher; p = Patcher(); p.auto()"
 
 # Create a startup script that launches all services
-RUN echo '#!/bin/bash' > /src/start.sh && \
-    echo 'export DISPLAY=:1' >> /src/start.sh && \
-    echo 'Xvfb $DISPLAY -screen 0 1920x1080x24+32 -ac &' >> /src/start.sh && \
-    echo '# Wait for Xvfb to be ready by checking for the socket file' >> /src/start.sh && \
-    echo 'while [ ! -S /tmp/.X11-unix/X${DISPLAY:1} ]; do echo "Waiting for Xvfb socket..."; sleep 1; done' >> /src/start.sh && \
-    echo 'fluxbox &' >> /src/start.sh && \
-    echo 'x11vnc -display $DISPLAY -forever -nopw -create &' >> /src/start.sh && \
-    echo 'websockify -D --web /usr/share/novnc/ 6901 localhost:5900 &' >> /src/start.sh && \
-    echo '# All services launched, now starting the main application' >> /src/start.sh && \
-    echo 'exec python api.py' >> /src/start.sh && \
-    chmod +x /src/start.sh
+# Place it in the root directory to avoid being overwritten by the volume mount
+RUN echo '#!/bin/bash' > /start.sh && \
+    echo 'export DISPLAY=:1' >> /start.sh && \
+    echo 'Xvfb $DISPLAY -screen 0 1920x1080x24+32 -ac &' >> /start.sh && \
+    echo '# Wait for Xvfb to be ready by checking for the socket file' >> /start.sh && \
+    echo 'while [ ! -S /tmp/.X11-unix/X${DISPLAY:1} ]; do echo "Waiting for Xvfb socket..."; sleep 1; done' >> /start.sh && \
+    echo 'fluxbox &' >> /start.sh && \
+    echo 'x11vnc -display $DISPLAY -forever -nopw -create &' >> /start.sh && \
+    echo 'websockify -D --web /usr/share/novnc/ 6901 localhost:5900 &' >> /start.sh && \
+    echo '# All services launched, now change to source directory' >> /start.sh && \
+    echo 'cd /src' >> /start.sh && \
+    echo '# and start the main application' >> /start.sh && \
+    echo 'exec python api.py' >> /start.sh && \
+    chmod +x /start.sh
 
 # Use the startup script as the entrypoint
-ENTRYPOINT ["/src/start.sh"]
+ENTRYPOINT ["/start.sh"]
 
 # Set DNS servers to resolve Supabase
 RUN echo "nameserver 8.8.8.8" > /etc/resolv.conf && \
