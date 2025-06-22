@@ -3,7 +3,8 @@
     "query_file": "sample_queries.txt",
     "domains_file": "domains.txt",
     "domain_mapping_file": "domain_mapping.json",
-    "proxy_file": "proxies.txt"
+    "proxy_file": "proxies.txt",
+    "user_agents": "user_agents.txt"
   },
   "general": {
     "queries": [],
@@ -31,7 +32,11 @@
     "excludes": "",
     "check_shopping_ads": false,
     "click_order": 5,
-    "purge_db_on_startup": false
+    "purge_db_on_startup": false,
+    "browser_count": 1,
+    "multiprocess_style": 1,
+    "send_to_android": false,
+    "request_boost": false
   },
   "database": {
     "use_supabase": true
