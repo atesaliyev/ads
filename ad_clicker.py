@@ -169,13 +169,23 @@ def main():
     try:
         logger.info("Verifying proxy connection by checking public IP...")
         driver.get("https://api.ipify.org")
-        sleep(get_random_sleep(2, 3) * config.behavior.wait_factor)
-        ip_address = driver.find_element(by=By.TAG_NAME, value="body").text
-        logger.info(f"Proxy connection successful. Current public IP: {ip_address}")
+        # Add a longer, more stable wait for the page to load, especially over a proxy
+        sleep(5) 
+        
+        # Use SeleniumBase's robust text retrieval and check if it's empty
+        ip_address = driver.get_text("body").strip()
+
+        if ip_address:
+            logger.info(f"Proxy connection verification successful. Current public IP: {ip_address}")
+        else:
+            logger.error("PROXY VERIFICATION FAILED: The IP checking page returned an empty response. The proxy is likely not working.")
+            take_screenshot(driver)
+            raise SystemExit("Proxy verification failed: Empty IP address.")
+
     except Exception as e:
-        logger.error(f"Could not verify proxy IP. The browser might be using the server's IP. Error: {e}")
-        # Depending on strictness, you might want to stop the script here
-        # raise SystemExit("Failed to verify proxy connection.")
+        logger.error(f"Could not verify proxy IP. An exception occurred during verification. Error: {e}")
+        take_screenshot(driver)
+        raise SystemExit("Proxy verification failed due to an exception.")
 
     if args.check_nowsecure:
         driver.get("https://nowsecure.nl/")

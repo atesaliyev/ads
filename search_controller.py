@@ -34,6 +34,7 @@ from utils import (
     get_random_sleep,
     resolve_redirect,
     boost_requests,
+    take_screenshot,
 )
 
 
@@ -1258,3 +1259,36 @@ class SearchController:
         """
 
         return self._stats
+
+    def perform_search(self, query: str) -> None:
+        """Perform a search on Google, looking for the search input field.
+
+        :type query: str
+        :param query: Search query
+        """
+
+        self._perform_page_load_for_search(self._driver, query)
+
+        try:
+            # Use SeleniumBase's built-in waiting mechanism for robustness.
+            # It will wait up to the specified timeout for the element to appear.
+            logger.info("Waiting for search input field '[name=\"q\"]' to be visible...")
+            self._driver.wait_for_element_visible('[name="q"]', timeout=15)
+
+            # Once visible, type the query using SeleniumBase's enhanced 'type' method.
+            logger.info("Search input field found. Typing query...")
+            self._driver.type('[name="q"]', f"{query}\n")
+
+        except Exception as e:
+            logger.error(f"Failed to find and type in search bar. The page might not have loaded correctly. Error: {e}")
+            take_screenshot(self._driver)
+            raise
+
+        sleep(get_random_sleep(2, 3) * config.behavior.wait_factor)
+
+        # ... rest of the search logic ...
+        logger.info("Searching completed. Now looking for ads...")
+
+    def _perform_page_load_for_search(self, driver: any, query: str) -> None:
+        # Implementation of _perform_page_load_for_search method
+        pass
