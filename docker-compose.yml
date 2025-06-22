@@ -15,8 +15,8 @@ services:
     # Volume Mappings
     # This ensures that your config, database, and logs are not lost
     # when the container is recreated.
-    volumes:
-      - .:/src
+    # volumes:
+    #   - .:/src
       
     # Restart Policy
     # Automatically restarts the container unless it is stopped manually.
