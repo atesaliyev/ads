@@ -1,32 +1,28 @@
 from pathlib import Path
-
-# =========================================================================
-#  VERSION CHECK: If you see this log, the file is up-to-date.
 from logger import logger
+
 logger.info("PROXY.PY VERSION 3.0 RUNNING - DYNAMIC AUTH SCRIPT")
-# =========================================================================
 
 try:
     from selenium.webdriver import ChromeOptions
 except ImportError:
     import sys
-
     packages_path = Path.cwd() / "env" / "Lib" / "site-packages"
     sys.path.insert(0, f"{packages_path}")
-
     from selenium.webdriver import ChromeOptions
 
 from config_reader import config
 from logger import logger
+import requests
 
+# ==================== PROXY BİLGİLERİ ====================
+HC_HOST = "core-residential.evomi.com"
+HC_PORT = 1000
+HC_USER = "dersdelisi2"
+HC_PASS = "cyOv4WS8RuTxg6rpn93U_country-TR"
 
 def get_proxies() -> list[str]:
-    """Get proxies from file, ignoring comments and empty lines.
-
-    :rtype: list
-    :returns: List of proxies
-    """
-
+    """Get proxies from file, ignoring comments and empty lines."""
     filepath = Path(config.paths.proxy_file)
 
     if not filepath.exists():
@@ -44,7 +40,6 @@ def get_proxies() -> list[str]:
 
     return proxies
 
-
 def install_plugin(
     chrome_options: ChromeOptions,
     proxy_host: str,
@@ -56,13 +51,6 @@ def install_plugin(
     """Install plugin on the fly for proxy authentication"""
 
     logger.info("<<<<< STATIC PROXY MODE ENGAGED: Bypassing all dynamic configs. >>>>>")
-
-    # ==================== HARDCODED PROXY DETAILS ====================
-    HC_HOST = "core-residential.evomi.com"
-    HC_PORT = 1000
-    HC_USER = "dersdelisi2"
-    HC_PASS = "cyOv4WS8RuTxg6rpn93U_country-TR"
-    # ===============================================================
 
     manifest_json = """
 {
@@ -87,7 +75,6 @@ def install_plugin(
 }
 """
 
-    # Base background script for setting the proxy server
     background_js_template = """
 var config = {
     mode: "fixed_servers",
@@ -103,7 +90,6 @@ var config = {
 chrome.proxy.settings.set({value: config, scope: "regular"}, function() {});
 """
 
-    # For static mode, we always use the auth script with hardcoded values
     auth_script = """
 function callbackFn(details) {
     return {
@@ -120,11 +106,9 @@ chrome.webRequest.onAuthRequired.addListener(
     ['blocking']
 );
 """ % (HC_USER, HC_PASS)
-    
-    background_js = (background_js_template % (config.webdriver.proxy_scheme, HC_HOST, HC_PORT)) + auth_script
-    
 
-    # Add a header modification to all requests to reinforce Turkish language preference
+    background_js = (background_js_template % (config.webdriver.proxy_scheme, HC_HOST, HC_PORT)) + auth_script
+
     header_script = """
 chrome.webRequest.onBeforeSendHeaders.addListener(
     function(details) {
@@ -144,7 +128,6 @@ chrome.webRequest.onBeforeSendHeaders.addListener(
     plugins_folder.mkdir(exist_ok=True)
 
     plugin_folder = plugins_folder / plugin_folder_name
-
     logger.debug(f"Creating '{plugin_folder}' folder...")
     plugin_folder.mkdir(exist_ok=True)
 
@@ -155,3 +138,23 @@ chrome.webRequest.onBeforeSendHeaders.addListener(
         background_js_file.write(background_js)
 
     chrome_options.add_argument(f"--load-extension={plugin_folder}")
+
+# ==================== IP TEST KISMI ====================
+def test_proxy_connection():
+    proxy_url = f"http://{HC_USER}:{HC_PASS}@{HC_HOST}:{HC_PORT}"
+    proxies = {
+        "http": proxy_url,
+        "https": proxy_url,
+    }
+
+    try:
+        logger.info("Testing proxy connection...")
+        r = requests.get("https://api.ipify.org", proxies=proxies, timeout=10)
+        r.raise_for_status()
+        print(f"✅ Proxy aktif. Görünen IP: {r.text}")
+    except Exception as e:
+        print("❌ Proxy bağlantısı başarısız:", str(e))
+
+# ==================== ÇALIŞTIR ====================
+if __name__ == "__main__":
+    test_proxy_connection()
