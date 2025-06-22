@@ -12,7 +12,6 @@ class PathParams:
     domains_file: str
     domain_mapping_file: str
     proxy_file: Optional[str]
-    user_agents: str
 
 
 @dataclass
@@ -33,6 +32,7 @@ class WebdriverParams:
     shift_windows: bool
     check_shopping_ads: bool
     ss_on_exception: bool
+    proxy_scheme: str
 
 
 @dataclass
@@ -57,11 +57,6 @@ class BehaviorParams:
     excludes: Optional[str]
     check_shopping_ads: bool
     click_order: int
-    purge_db_on_startup: bool
-    browser_count: int
-    multiprocess_style: int
-    send_to_android: bool
-    request_boost: bool
 
 
 class ConfigReader:
@@ -88,7 +83,6 @@ class ConfigReader:
             domains_file=config["paths"]["domains_file"],
             domain_mapping_file=config["paths"]["domain_mapping_file"],
             proxy_file=config["paths"]["proxy_file"],
-            user_agents=config["paths"]["user_agents"],
         )
 
         self.general = GeneralParams(
@@ -107,6 +101,7 @@ class ConfigReader:
             shift_windows=config["webdriver"]["shift_windows"],
             check_shopping_ads=config["webdriver"]["check_shopping_ads"],
             ss_on_exception=config["webdriver"]["ss_on_exception"],
+            proxy_scheme=config["webdriver"]["proxy_scheme"],
         )
 
         self.behavior = BehaviorParams(
@@ -130,11 +125,6 @@ class ConfigReader:
             excludes=config["behavior"]["excludes"],
             check_shopping_ads=config["behavior"]["check_shopping_ads"],
             click_order=config["behavior"]["click_order"],
-            purge_db_on_startup=config["behavior"]["purge_db_on_startup"],
-            browser_count=config["behavior"]["browser_count"],
-            multiprocess_style=config["behavior"]["multiprocess_style"],
-            send_to_android=config["behavior"]["send_to_android"],
-            request_boost=config["behavior"]["request_boost"],
         )
 
 

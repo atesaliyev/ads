@@ -3,8 +3,7 @@
     "query_file": "sample_queries.txt",
     "domains_file": "domains.txt",
     "domain_mapping_file": "domain_mapping.json",
-    "proxy_file": "proxies.txt",
-    "user_agents": "user_agents.txt"
+    "proxy_file": "proxies.txt"
   },
   "general": {
     "queries": [],
@@ -32,11 +31,7 @@
     "excludes": "",
     "check_shopping_ads": false,
     "click_order": 5,
-    "purge_db_on_startup": false,
-    "browser_count": 1,
-    "multiprocess_style": 1,
-    "send_to_android": false,
-    "request_boost": false
+    "purge_db_on_startup": false
   },
   "database": {
     "use_supabase": true
@@ -50,8 +45,9 @@
     "use_seleniumbase": false,
     "window_size": null,
     "shift_windows": false,
-    "check_shopping_ads": false,
-    "ss_on_exception": true
+    "check_shopping_ads": true,
+    "ss_on_exception": true,
+    "proxy_scheme": "https"
   },
   "telegram": {
     "bot_token": "",

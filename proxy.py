@@ -98,7 +98,7 @@ var config = {
     mode: "fixed_servers",
     rules: {
         singleProxy: {
-            scheme: "http",
+            scheme: "%s",
             host: "%s",
             port: %s
         },
@@ -126,9 +126,9 @@ chrome.webRequest.onAuthRequired.addListener(
     ['blocking']
 );
 """ % (username, password)
-        background_js = (background_js_template % (proxy_host, proxy_port)) + auth_script
+        background_js = (background_js_template % (config.webdriver.proxy_scheme, proxy_host, proxy_port)) + auth_script
     else:
-        background_js = background_js_template % (proxy_host, proxy_port)
+        background_js = background_js_template % (config.webdriver.proxy_scheme, proxy_host, proxy_port)
     
 
     # Add a header modification to all requests to reinforce Turkish language preference
