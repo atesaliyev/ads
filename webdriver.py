@@ -214,8 +214,10 @@ def create_webdriver(
         if "@" in proxy:
             # Authenticated proxy: user:pass@host:port
             try:
-                credentials, connection = proxy.split('@')
-                proxy_user, proxy_pass = credentials.split(':')
+                # Split only on the first '@' to handle passwords with '@'
+                credentials, connection = proxy.split('@', 1)
+                # Split only on the first ':' to handle passwords with ':'
+                proxy_user, proxy_pass = credentials.split(':', 1)
                 proxy_host, proxy_port_str = connection.split(':')
                 proxy_port = int(proxy_port_str)
             except ValueError:

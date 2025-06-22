@@ -1,5 +1,11 @@
 from pathlib import Path
 
+# =========================================================================
+#  VERSION CHECK: If you see this log, the file is up-to-date.
+from logger import logger
+logger.info("PROXY.PY VERSION 3.0 RUNNING - DYNAMIC AUTH SCRIPT")
+# =========================================================================
+
 try:
     from selenium.webdriver import ChromeOptions
 except ImportError:
