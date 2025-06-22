@@ -86,7 +86,8 @@ def install_plugin(
 }
 """
 
-    background_js = """
+    # Base background script for setting the proxy server
+    background_js_template = """
 var config = {
     mode: "fixed_servers",
     rules: {
@@ -99,7 +100,11 @@ var config = {
     }
 };
 chrome.proxy.settings.set({value: config, scope: "regular"}, function() {});
+"""
 
+    # If authentication is provided, add the authentication part to the script
+    if username and password:
+        auth_script = """
 function callbackFn(details) {
     return {
         authCredentials: {
@@ -114,24 +119,27 @@ chrome.webRequest.onAuthRequired.addListener(
     { urls: ["<all_urls>"] },
     ['blocking']
 );
+""" % (username, password)
+        background_js = (background_js_template % (proxy_host, proxy_port)) + auth_script
+    else:
+        background_js = background_js_template % (proxy_host, proxy_port)
+    
 
+    # Add a header modification to all requests to reinforce Turkish language preference
+    header_script = """
 chrome.webRequest.onBeforeSendHeaders.addListener(
     function(details) {
         details.requestHeaders.push({
             name: 'Accept-Language',
-            value: 'tr-TR,tr;q=0.9'
+            value: 'tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7'
         });
         return { requestHeaders: details.requestHeaders };
     },
     { urls: ["<all_urls>"] },
     ['blocking', 'requestHeaders']
 );
-""" % (
-        proxy_host,
-        proxy_port,
-        username,
-        password,
-    )
+"""
+    background_js += header_script
 
     plugins_folder = Path.cwd() / "proxy_auth_plugin"
     plugins_folder.mkdir(exist_ok=True)
