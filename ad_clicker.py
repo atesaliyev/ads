@@ -24,6 +24,7 @@ from utils import (
     add_cookies,
 )
 from webdriver import create_webdriver
+from selenium.webdriver.common.by import By
 
 
 if config.behavior.telegram_enabled:
