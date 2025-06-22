@@ -310,8 +310,7 @@ def create_seleniumbase_driver(
         agent=user_agent,
         proxy=proxy,
         proxy_bypass_list="localhost",
-        cap_file=None,          # Use None for capabilities
-        start_page=None         # Don't start on a specific page
+        cap_file=None          # Use None for capabilities
     )
 
     if proxy:
