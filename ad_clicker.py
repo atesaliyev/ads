@@ -158,6 +158,24 @@ def main():
 
     driver, country_code = create_webdriver(proxy, user_agent, plugin_folder_name)
 
+    if config.behavior.custom_cookies:
+        # Navigate to the domain before setting cookies
+        logger.info("Navigating to google.com.tr to set cookies for the correct domain.")
+        driver.get("https://www.google.com.tr/")
+        add_cookies(driver)
+
+    # Verify public IP to ensure proxy is working
+    try:
+        logger.info("Verifying proxy connection by checking public IP...")
+        driver.get("https://api.ipify.org")
+        sleep(get_random_sleep(2, 3) * config.behavior.wait_factor)
+        ip_address = driver.find_element(by=By.TAG_NAME, value="body").text
+        logger.info(f"Proxy connection successful. Current public IP: {ip_address}")
+    except Exception as e:
+        logger.error(f"Could not verify proxy IP. The browser might be using the server's IP. Error: {e}")
+        # Depending on strictness, you might want to stop the script here
+        # raise SystemExit("Failed to verify proxy connection.")
+
     if args.check_nowsecure:
         driver.get("https://nowsecure.nl/")
         sleep(7 * config.behavior.wait_factor)

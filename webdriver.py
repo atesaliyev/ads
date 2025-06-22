@@ -205,21 +205,41 @@ def create_webdriver(
 
         # Force DNS to go through proxy as well, to prevent DNS leaks
         prefs["net.proxy.proxy_dns"] = True
+        
+        proxy_host = ""
+        proxy_port = 0
+        proxy_user = ""
+        proxy_pass = ""
 
-        if config.webdriver.auth:
-            if "@" not in proxy or proxy.count(":") != 2:
-                raise ValueError(
-                    "Invalid proxy format! Should be in 'username:password@host:port' format"
-                )
-
-            username, password = proxy.split("@")[0].split(":")
-            host, port = proxy.split("@")[1].split(":")
-
-            install_plugin(chrome_options, host, int(port), username, password, plugin_folder_name)
-            sleep(2 * config.behavior.wait_factor)
-
+        if "@" in proxy:
+            # Authenticated proxy: user:pass@host:port
+            try:
+                credentials, connection = proxy.split('@')
+                proxy_user, proxy_pass = credentials.split(':')
+                proxy_host, proxy_port_str = connection.split(':')
+                proxy_port = int(proxy_port_str)
+            except ValueError:
+                raise ValueError("Invalid authenticated proxy format! Expected 'username:password@host:port'.")
         else:
-            chrome_options.add_argument(f"--proxy-server={proxy}")
+            # Unauthenticated proxy: host:port
+            try:
+                proxy_host, proxy_port_str = proxy.split(':')
+                proxy_port = int(proxy_port_str)
+            except ValueError:
+                raise ValueError("Invalid proxy format! Expected 'host:port'.")
+
+        logger.debug(f"Proxy configured with Host: {proxy_host}, Port: {proxy_port}, Auth: {'Yes' if proxy_user else 'No'}")
+
+        install_plugin(
+            chrome_options, 
+            proxy_host, 
+            proxy_port, 
+            proxy_user if proxy_user else None, 
+            proxy_pass if proxy_pass else None, 
+            plugin_folder_name
+        )
+        sleep(2 * config.behavior.wait_factor)
+
 
         # get location of the proxy IP
         lat, long, country_code, timezone = get_location(geolocation_db_client, proxy)
