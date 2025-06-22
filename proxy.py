@@ -53,21 +53,16 @@ def install_plugin(
     password: str,
     plugin_folder_name: str,
 ) -> None:
-    """Install plugin on the fly for proxy authentication
+    """Install plugin on the fly for proxy authentication"""
 
-    :type chrome_options: ChromeOptions
-    :param chrome_options: ChromeOptions instance to add plugin
-    :type proxy_host: str
-    :param proxy_host: Proxy host
-    :type proxy_port: int
-    :param proxy_port: Proxy port
-    :type username: str
-    :param username: Proxy username
-    :type password: str
-    :param password: Proxy password
-    :type plugin_folder_name: str
-    :param plugin_folder_name: Plugin folder name for proxy
-    """
+    logger.info("<<<<< STATIC PROXY MODE ENGAGED: Bypassing all dynamic configs. >>>>>")
+
+    # ==================== HARDCODED PROXY DETAILS ====================
+    HC_HOST = "core-residential.evomi.com"
+    HC_PORT = 1000
+    HC_USER = "dersdelisi2"
+    HC_PASS = "cyOv4WS8RuTxg6rpn93U_country-TR"
+    # ===============================================================
 
     manifest_json = """
 {
@@ -108,9 +103,8 @@ var config = {
 chrome.proxy.settings.set({value: config, scope: "regular"}, function() {});
 """
 
-    # If authentication is provided, add the authentication part to the script
-    if username and password:
-        auth_script = """
+    # For static mode, we always use the auth script with hardcoded values
+    auth_script = """
 function callbackFn(details) {
     return {
         authCredentials: {
@@ -125,10 +119,9 @@ chrome.webRequest.onAuthRequired.addListener(
     { urls: ["<all_urls>"] },
     ['blocking']
 );
-""" % (username, password)
-        background_js = (background_js_template % (config.webdriver.proxy_scheme, proxy_host, proxy_port)) + auth_script
-    else:
-        background_js = background_js_template % (config.webdriver.proxy_scheme, proxy_host, proxy_port)
+""" % (HC_USER, HC_PASS)
+    
+    background_js = (background_js_template % (config.webdriver.proxy_scheme, HC_HOST, HC_PORT)) + auth_script
     
 
     # Add a header modification to all requests to reinforce Turkish language preference
