@@ -311,7 +311,6 @@ def create_seleniumbase_driver(
         proxy=proxy,
         proxy_bypass_list="localhost",
         cap_file=None,          # Use None for capabilities
-        switch_to_frame=False,  # Don't auto-switch frames
         start_page=None         # Don't start on a specific page
     )
 
