@@ -52,6 +52,17 @@ RUN echo '#!/bin/bash' > /start.sh && \
     echo 'fluxbox &' >> /start.sh && \
     echo 'x11vnc -display $DISPLAY -forever -nopw -create &' >> /start.sh && \
     echo 'websockify -D --web /usr/share/novnc/ 6901 localhost:5900 &' >> /start.sh && \
+    echo '' >> /start.sh && \
+    echo '# === DIAGNOSTIC STEP: Check Chrome Version ===' >> /start.sh && \
+    echo 'echo "---- DIAGNOSTIC: Google Chrome Version ----"' >> /start.sh && \
+    echo 'google-chrome --version' >> /start.sh && \
+    echo 'echo "-------------------------------------------"' >> /start.sh && \
+    echo '' >> /start.sh && \
+    echo '# === DIAGNOSTIC STEP: Check file content ===' >> /start.sh && \
+    echo 'echo "---- DIAGNOSTIC: First 5 lines of /src/cookies.txt ----"' >> /start.sh && \
+    echo 'head -n 5 /src/cookies.txt' >> /start.sh && \
+    echo 'echo "-----------------------------------------------------"' >> /start.sh && \
+    echo '' >> /start.sh && \
     echo '# All services launched, now change to source directory' >> /start.sh && \
     echo 'cd /src' >> /start.sh && \
     echo '# and start the main application' >> /start.sh && \

@@ -42,7 +42,7 @@
     "auth": true,
     "country_domain": true,
     "language_from_proxy": true,
-    "use_seleniumbase": false,
+    "use_seleniumbase": true,
     "window_size": null,
     "shift_windows": false,
     "check_shopping_ads": true,

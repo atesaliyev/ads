@@ -271,138 +271,55 @@ def create_webdriver(
             headless=False,
         )
 
-        # Friend's JS override suggestion
-        driver.execute_cdp_cmd('Page.addScriptToEvaluateOnNewDocument', {
-            "source": """
-                Object.defineProperty(navigator, 'language', {get: () => 'tr-TR'});
-                Object.defineProperty(navigator, 'languages', {get: () => ['tr-TR', 'tr']});
-            """
-        })
-
-        # Set timezone if available
-        if timezone:
-            logger.debug(f"Overriding timezone to {timezone}...")
-            driver.execute_cdp_cmd("Emulation.setTimezoneOverride", {"timezoneId": timezone})
-
-        accuracy = 95
-
-        # Set geolocation and timezone of the browser according to IP address
-        if lat and long:
-            driver.execute_cdp_cmd(
-                "Emulation.setGeolocationOverride",
-                {"latitude": lat, "longitude": long, "accuracy": accuracy},
-            )
-
-            # If timezone was not found (and not TR), try to look it up
-            if not timezone:
-                try:
-                    response = requests.get(f"http://timezonefinder.michelfe.it/api/0_{long}_{lat}")
-                    if response.status_code == 200:
-                        timezone = response.json().get("timezone_id")
-                except Exception as e:
-                    logger.warning(f"Timezone API lookup failed: {e}")
-
-        # If we have a timezone, apply it
-        if timezone:
-            try:
-                logger.debug(f"Applying timezone override: {timezone}")
-                driver.execute_cdp_cmd("Emulation.setTimezoneOverride", {"timezoneId": timezone})
-            except Exception as e:
-                logger.warning(f"Could not set timezone: {e}")
-
-        # Force locale to match the proxy country to prevent location leakage
-        if country_code == "TR":
-            try:
-                locale_override = "tr-TR"
-                logger.debug(f"Applying locale override with: {locale_override}")
-                driver.execute_cdp_cmd("Emulation.setLocaleOverride", {"locale": locale_override})
-            except Exception as e:
-                logger.warning(f"Could not set locale override: {e}")
+        _execute_stealth_js_code(driver)
 
     else:
+        # Create a driver without proxy if no proxy is provided
         driver = CustomChrome(
-            options=chrome_options,
+            driver_executable_path=(
+                driver_exe_path if multi_procs_enabled and Path(driver_exe_path).exists() else None
+            ),
             user_multi_procs=multi_procs_enabled,
             use_subprocess=False,
             headless=False,
         )
-
-    # driver.maximize_window() is commented out to prevent errors
-    sleep(1 * config.behavior.wait_factor)
-    _shift_window_position(driver)
-
+        
+    driver.set_window_size(1920, 1080)
     return driver, country_code
+
 
 def create_seleniumbase_driver(
     proxy: str, user_agent: Optional[str] = None
 ) -> tuple[seleniumbase.Driver, Optional[str]]:
-    """Create SeleniumBase Chrome webdriver instance
+    """Create a SeleniumBase driver instance with robust proxy support.
 
     :type proxy: str
-    :param proxy: Proxy to use in ip:port or user:pass@host:port format
-    :type user_agent: str
-    :param user_agent: User agent string
-    :rtype: tuple
-    :returns: (Driver, country_code) pair
+    :param proxy: Proxy string in 'user:pass@host:port' or 'host:port' format.
+    :type user_agent: str, optional
+    :param user_agent: User agent string.
+    :return: A tuple containing the driver instance and the country code.
     """
-
+    logger.info("Creating driver with SeleniumBase for robust proxy handling...")
+    
     geolocation_db_client = GeolocationDB()
-
     country_code = None
-
-    if proxy:
-        logger.info(f"Using proxy: {proxy}")
-
-        if config.webdriver.auth:
-            if "@" not in proxy or proxy.count(":") != 2:
-                raise ValueError(
-                    "Invalid proxy format! Should be in 'username:password@host:port' format"
-                )
-
-        # get location of the proxy IP
-        lat, long, country_code, timezone = get_location(geolocation_db_client, proxy)
-
-        if config.webdriver.language_from_proxy:
-            lang = get_locale_language(country_code)
-
-    driver = seleniumbase.get_driver(
-        browser_name="chrome",
-        undetectable=True,
-        headless2=False,
-        do_not_track=True,
-        user_agent=user_agent,
-        proxy_string=proxy or None,
-        incognito=config.webdriver.incognito,
-        locale_code=str(lang) if config.webdriver.language_from_proxy else None,
+    
+    driver = seleniumbase.Driver(
+        uc=True,                # Use undetected-chromedriver mode
+        headless=False,         # Run in non-headless mode to see the browser
+        agent=user_agent,
+        proxy=proxy,
+        proxy_bypass_list="localhost",
+        cap_file=None,          # Use None for capabilities
+        switch_to_frame=False,  # Don't auto-switch frames
+        start_page=None         # Don't start on a specific page
     )
 
-    # set geolocation and timezone if available
-    if proxy and lat and long:
-        accuracy = 95
-        driver.execute_cdp_cmd(
-            "Emulation.setGeolocationOverride",
-            {"latitude": lat, "longitude": long, "accuracy": accuracy},
-        )
+    if proxy:
+        # Get location of the proxy IP
+        _, _, country_code, _ = get_location(geolocation_db_client, proxy)
 
-        if not timezone:
-            response = requests.get(f"http://timezonefinder.michelfe.it/api/0_{long}_{lat}")
-            if response.status_code == 200:
-                timezone = response.json()["timezone_id"]
-
-        if timezone:
-            try:
-                driver.execute_cdp_cmd("Emulation.setTimezoneOverride", {"timezoneId": timezone})
-            except Exception as e:
-                logger.warning(f"Could not set timezone: {e}")
-
-        logger.debug(
-            f"Timezone of {proxy.split('@')[1] if config.webdriver.auth else proxy}: {timezone}"
-        )
-
-    sleep(1 * config.behavior.wait_factor)
-
-    _shift_window_position(driver)
-
+    driver.set_window_size(1920, 1080)
     return driver, country_code
 
 
